@@ -94,6 +94,12 @@ export const assertIssuerKeywords = (zcf, expected) => {
 };
 
 /**
+ * @typedef {Object} ZcfSeatPartial
+ * @property {() => ProposalRecord} getProposal
+ * @property {() => Allocation} getCurrentAllocation
+ */
+
+/**
  * Check whether an update to currentAllocation satisfies
  * proposal.want. Note that this is half of the offer safety
  * check; whether the allocation constitutes a refund is not
@@ -101,7 +107,7 @@ export const assertIssuerKeywords = (zcf, expected) => {
  * (update's values prevailing if the keywords are the same)
  * to produce the newAllocation.
  * @param {ContractFacet} zcf
- * @param {ZCFSeat} seat
+ * @param {ZcfSeatPartial} seat
  * @param {AmountKeywordRecord} update
  * @returns {boolean}
  */
