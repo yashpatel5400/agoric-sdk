@@ -456,62 +456,38 @@ test('ZoeHelpers trade ok', t => {
   );
 });
 
-test.skip('ZoeHelpers trade sameHandle', t => {
-  t.plan(4);
-  const { moolaR, simoleanR, moola, simoleans } = setup();
-  const leftOfferHandle = harden({});
-  const rightOfferHandle = harden({});
-    const mockZCFBuilder = makeMockTradingZcfBuilder();
-    mockZCFBuilder.addBrand(moolaR);
-    mockZCFBuilder.addBrand(simoleanR);
-    mockZCFBuilder.addAllocation(leftOfferHandle, { Asset: moola(10) });
-    mockZCFBuilder.addAllocation(rightOfferHandle, { Money: simoleans(6) });
-    mockZCFBuilder.addOffer(leftOfferHandle, {
-      proposal: {
-        give: { Asset: moola(10) },
-        want: { Bid: simoleans(4) },
-        exit: { onDemand: null },
-      },
-    });
-    mockZCFBuilder.addOffer(rightOfferHandle, {
-      proposal: {
-        give: { Money: simoleans(6) },
-        want: { Items: moola(7) },
-        exit: { onDemand: null },
-      },
-    });
-    const mockZCF = mockZCFBuilder.build();
-    const { trade } = makeZoeHelpers(mockZCF);
-    t.throws(
-      () =>
-        trade(
-          {
-            offerHandle: leftOfferHandle,
-            gains: { Bid: simoleans(4) },
-            losses: { Asset: moola(7) },
-          },
-          {
-            offerHandle: leftOfferHandle,
-            gains: { Items: moola(7) },
-            losses: { Money: simoleans(4) },
-          },
-        ),
-      /an offer cannot trade with itself/,
-      `safe offer trading with itself fails with nice error message`,
-    );
-    t.deepEqual(
-      mockZCF.getReallocatedHandles(),
-      harden([]),
-      `no handles reallocated`,
-    );
-    t.deepEqual(
-      mockZCF.getReallocatedAmountObjs(),
-      [],
-      `no amounts reallocated`,
-    );
-    t.deepEqual(
-      mockZCF.getCompletedHandles(),
-      harden([]),
-      `no handles were completed`,
+test('ZoeHelpers trade sameHandle', t => {
+  const { moolaR, simoleanR, moola, simoleans, amountMaths, brands } = setup();
+  const getAmountMath =
+      brand => amountMaths.get(brand.getAllegedName());
+  const leftProposal = {
+    give: { Asset: moola(10) },
+    want: { Bid: simoleans(4) },
+    exit: { onDemand: null },
+  }
+  const leftAlloc = { Asset: moola(10) };
+  const leftZcfSeat = makeMockZcfSeatAdmin(leftProposal, leftAlloc, getAmountMath);
+
+  const mockZCFBuilder = makeMockTradingZcfBuilder();
+  mockZCFBuilder.addBrand(moolaR);
+  mockZCFBuilder.addBrand(simoleanR);
+  const mockZCF = mockZCFBuilder.build();
+  t.throws(
+    () =>
+      trade(
+        mockZCF,
+        {
+          seat: leftZcfSeat,
+          gains: { Bid: simoleans(4) },
+          losses: { Asset: moola(7) },
+        },
+        {
+          seat: leftZcfSeat,
+          gains: { Items: moola(7) },
+          losses: { Money: simoleans(4) },
+        },
+      ),
+    { message: 'a seat cannot trade with itself'},
+    'seats must be different',
     );
 });
