@@ -7,7 +7,14 @@ import '../../../exported';
  * @type {ContractStartFn}
  */
 const start = zcf => {
-  return { creatorFacet: zcf };
+  const publicFacet = harden({
+    makeInvitationForSeat: () =>
+      zcf.makeInvitation(seat => {
+        return seat;
+      }, ''),
+  });
+
+  return { creatorFacet: zcf, publicFacet };
 };
 
 harden(start);
