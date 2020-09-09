@@ -64,3 +64,65 @@ test(`zoe - zcfSeat.kickOut() doesn't throw`, async t => {
     message: 'seat has been exited',
   });
 });
+
+test(`zoe+zcf - consistent issuers w/saveIssuer`, async t => {
+  const { moolaIssuer, moolaR, simoleanIssuer, simoleanR } = setup();
+  const zoe = makeZoe(fakeVatAdmin);
+
+  // pack the contract
+  const bundle = await bundleSource(contractRoot);
+  // install the contract
+  const installation = await zoe.install(bundle);
+
+  // Alice creates an instance
+  const issuerKeywordRecord = harden({ A: moolaIssuer });
+
+  // This contract gives ZCF as the contractFacet for testing purposes
+  const { creatorFacet, instance } = await E(zoe).startInstance(
+    installation,
+    issuerKeywordRecord,
+  );
+  /** @type ContractFacet */
+  const zcf = creatorFacet;
+
+  t.is(
+    zcf.getIssuerForBrand(moolaR.brand),
+    await E.G(E(zoe).getIssuers(instance)).A,
+  );
+  const issuerRecord = zcf.saveIssuer(simoleanIssuer, 'Sim');
+  t.throws(() => zcf.getIssuerForBrand(simoleanR.brand), {
+    message: '"brand" not found: (an object)\nSee console for error data.',
+  });
+  await issuerRecord;
+  t.is(
+    zcf.getIssuerForBrand(simoleanR.brand),
+    await E.G(E(zoe).getIssuers(instance)).Sim,
+  );
+});
+
+test(`zoe+zcf - consistent issuers with makeZcfMint`, async t => {
+  const { moolaIssuer, moolaR } = setup();
+  const zoe = makeZoe(fakeVatAdmin);
+
+  // pack the contract
+  const bundle = await bundleSource(contractRoot);
+  // install the contract
+  const installation = await zoe.install(bundle);
+
+  // Alice creates an instance
+  const issuerKeywordRecord = harden({ A: moolaIssuer });
+
+  // This contract gives ZCF as the contractFacet for testing purposes
+  const { creatorFacet, instance } = await E(zoe).startInstance(
+    installation,
+    issuerKeywordRecord,
+  );
+  /** @type ContractFacet */
+  const zcf = creatorFacet;
+
+  t.is(zcf.getIssuerForBrand(moolaR.brand), zoe.getIssuers(instance).A);
+
+  const bMint = await zcf.makeZCFMint('Bullion');
+  const issuerRecord = await E(bMint).getIssuerRecord();
+  t.is(await E.G(E(zoe).getIssuers(instance)).Bullion, issuerRecord.issuer);
+});
