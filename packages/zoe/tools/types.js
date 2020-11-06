@@ -3,7 +3,7 @@
  * schedule a single wake() call, create a repeater that will allow scheduling
  * of events at regular intervals, or remove scheduled calls.
  * @property {() => Timestamp} getCurrentTimestamp Retrieve the latest timestamp
- * @property {(baseTime: Timestamp, waker: TimerWaker) => Timestamp} setWakeup Return
+ * @property {(baseTime: Timestamp, waker: TimerWaker) => Promise<Timestamp>} setWakeup Return
  * value is the time at which the call is scheduled to take place
  * @property {(waker: TimerWaker) => Array<Timestamp>} removeWakeup Remove the waker
  * from all its scheduled wakeups, whether produced by `timer.setWakeup(h)` or
