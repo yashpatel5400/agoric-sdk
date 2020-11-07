@@ -1,5 +1,7 @@
-import { makePriceAuthorityRegistry } from '@agoric/zoe/tools/priceAuthorityRegistry';
-import { makeFakePriceAuthority } from '@agoric/zoe/tools/fakePriceAuthority';
+import {
+  makePriceAuthorityRegistry,
+  makeFakePriceAuthority,
+} from '@agoric/zoe/src/contracts/priceAuthority';
 import { makeLocalAmountMath } from '@agoric/ertp';
 
 export function buildRootObject(_vatPowers) {

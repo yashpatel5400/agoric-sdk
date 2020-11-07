@@ -5,9 +5,9 @@ import { updateFromIterable, makeNotifierKit } from '@agoric/notifier';
 import { E } from '@agoric/eventual-send';
 import { assert, details } from '@agoric/assert';
 
-import { natSafeMath } from '../src/contractSupport';
+import { natSafeMath } from '../../contractSupport';
 
-import '../exported';
+import '../../../exported';
 
 /**
  * @typedef {number} ValueIn
@@ -158,9 +158,9 @@ export async function makeFungiblePriceAuthority(options) {
         updater.fail(reason);
       },
       updateState({ timestamp, item: [valueIn, valueOut] }) {
+        latestQuote = makeQuote(valueIn, valueOut, timestamp);
         latestValueIn = valueIn;
         latestValueOut = valueOut;
-        latestQuote = makeQuote(valueIn, valueOut, timestamp);
         updater.updateState(latestQuote);
 
         // Check the triggers with the new quote.

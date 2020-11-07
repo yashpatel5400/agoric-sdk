@@ -39,12 +39,10 @@ export default function buildManualTimer(log, startValue = 0) {
     getCurrentTimestamp() {
       return ticks;
     },
-    async setWakeup(baseTime, waker) {
+    setWakeup(baseTime, waker) {
       if (baseTime <= ticks) {
-        if (baseTime < ticks) {
-          log(`&& task was past its deadline when scheduled: ${baseTime} &&`);
-        }
-        await E(waker).wake(ticks);
+        log(`&& task was past its deadline when scheduled: ${baseTime} &&`);
+        E(waker).wake(ticks);
         return baseTime;
       }
       log(`@@ schedule task for:${baseTime}, currently: ${ticks} @@`);
@@ -83,7 +81,7 @@ export default function buildManualTimer(log, startValue = 0) {
           if (!wakers) {
             return;
           }
-          await timer.setWakeup(ticks + interval, repeaterWaker);
+          timer.setWakeup(ticks + interval, repeaterWaker);
           await Promise.allSettled(
             wakers.map(waker => E(waker).wake(timestamp)),
           );

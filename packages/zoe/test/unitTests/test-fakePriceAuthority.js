@@ -9,7 +9,7 @@ import buildManualTimer from '../../tools/manualTimer';
 import { setup } from './setupBasicMints';
 import { makeFakePriceAuthority } from '../../tools/fakePriceAuthority';
 
-const makeTestPriceAuthority = async (amountMaths, priceList, timer) =>
+const makeTestPriceAuthority = (amountMaths, priceList, timer) =>
   makeFakePriceAuthority({
     mathIn: amountMaths.get('moola'),
     mathOut: amountMaths.get('bucks'),
@@ -28,7 +28,7 @@ test('priceAuthority quoteAtTime', async t => {
   );
 
   const done = E(priceAuthority)
-    .quoteAtTime(2, moola(5), bucksBrand)
+    .quoteAtTime(3, moola(5), bucksBrand)
     .then(async quote => {
       t.deepEqual(
         moola(5),
@@ -36,9 +36,11 @@ test('priceAuthority quoteAtTime', async t => {
         'amountIn match',
       );
       t.deepEqual(bucks(55 * 5), quote.quoteAmount.value[0].amountOut);
-      t.is(2, quote.quoteAmount.value[0].timestamp);
+      t.is(3, quote.quoteAmount.value[0].timestamp);
     });
 
+  await E(manualTimer).tick();
+  await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
   await done;
@@ -54,9 +56,10 @@ test('priceAuthority quoteGiven', async t => {
     manualTimer,
   );
 
+  await E(manualTimer).tick();
   const quote = await E(priceAuthority).quoteGiven(moola(37), bucksBrand);
   const quoteAmount = quote.quoteAmount.value[0];
-  t.is(0, quoteAmount.timestamp);
+  t.is(1, quoteAmount.timestamp);
   t.deepEqual(bucks(37 * 20), quoteAmount.amountOut);
 });
 
@@ -70,9 +73,10 @@ test('priceAuthority quoteWanted', async t => {
     manualTimer,
   );
 
+  await E(manualTimer).tick();
   const quote = await E(priceAuthority).quoteWanted(moolaBrand, bucks(400));
   const quoteAmount = quote.quoteAmount.value[0];
-  t.is(0, quoteAmount.timestamp);
+  t.is(1, quoteAmount.timestamp);
   t.deepEqual(bucks(400), quoteAmount.amountOut);
   t.deepEqual(moola(20), quoteAmount.amountIn);
 });
@@ -88,15 +92,17 @@ test('priceAuthority paired quotes', async t => {
     manualTimer,
   );
 
+  await E(manualTimer).tick();
+
   const quoteOut = await E(priceAuthority).quoteWanted(moolaBrand, bucks(400));
   const quoteOutAmount = quoteOut.quoteAmount.value[0];
-  t.is(0, quoteOutAmount.timestamp);
+  t.is(1, quoteOutAmount.timestamp);
   t.deepEqual(bucks(400), quoteOutAmount.amountOut);
   t.deepEqual(moola(20), quoteOutAmount.amountIn);
 
   const quoteIn = await E(priceAuthority).quoteGiven(moola(22), bucksBrand);
   const quoteInAmount = quoteIn.quoteAmount.value[0];
-  t.is(0, quoteInAmount.timestamp);
+  t.is(1, quoteInAmount.timestamp);
   t.deepEqual(bucks(20 * 22), quoteInAmount.amountOut);
   t.deepEqual(moola(22), quoteInAmount.amountIn);
 });
@@ -114,12 +120,14 @@ test('priceAuthority quoteWhenGTE', async t => {
     .quoteWhenGTE(moola(1), bucks(40))
     .then(quote => {
       const quoteInAmount = quote.quoteAmount.value[0];
-      t.is(3, manualTimer.getCurrentTimestamp());
-      t.is(3, quoteInAmount.timestamp);
+      t.is(4, manualTimer.getCurrentTimestamp());
+      t.is(4, quoteInAmount.timestamp);
       t.deepEqual(bucks(40), quoteInAmount.amountOut);
       t.deepEqual(moola(1), quoteInAmount.amountIn);
     });
 
+  await E(manualTimer).tick();
+  await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
@@ -138,12 +146,14 @@ test('priceAuthority quoteWhenLT', async t => {
     .quoteWhenLT(moola(1), bucks(30))
     .then(quote => {
       const quoteInAmount = quote.quoteAmount.value[0];
-      t.is(2, manualTimer.getCurrentTimestamp());
-      t.is(2, quoteInAmount.timestamp);
+      t.is(3, manualTimer.getCurrentTimestamp());
+      t.is(3, quoteInAmount.timestamp);
       t.deepEqual(bucks(29), quoteInAmount.amountOut);
       t.deepEqual(moola(1), quoteInAmount.amountIn);
     });
 
+  await E(manualTimer).tick();
+  await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
 });
@@ -161,12 +171,14 @@ test('priceAuthority quoteWhenGT', async t => {
     .quoteWhenGT(moola(1), bucks(40))
     .then(quote => {
       const quoteInAmount = quote.quoteAmount.value[0];
-      t.is(2, manualTimer.getCurrentTimestamp());
-      t.is(2, quoteInAmount.timestamp);
+      t.is(3, manualTimer.getCurrentTimestamp());
+      t.is(3, quoteInAmount.timestamp);
       t.deepEqual(bucks(41), quoteInAmount.amountOut);
       t.deepEqual(moola(1), quoteInAmount.amountIn);
     });
 
+  await E(manualTimer).tick();
+  await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
 });
@@ -184,12 +196,13 @@ test('priceAuthority quoteWhenLTE', async t => {
     .quoteWhenLTE(moola(1), bucks(25))
     .then(quote => {
       const quoteInAmount = quote.quoteAmount.value[0];
-      t.is(3, quoteInAmount.timestamp);
-      t.is(3, manualTimer.getCurrentTimestamp());
+      t.is(4, quoteInAmount.timestamp);
+      t.is(4, manualTimer.getCurrentTimestamp());
       t.deepEqual(bucks(25), quoteInAmount.amountOut);
       t.deepEqual(moola(1), quoteInAmount.amountIn);
     });
 
+  await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();
   await E(manualTimer).tick();

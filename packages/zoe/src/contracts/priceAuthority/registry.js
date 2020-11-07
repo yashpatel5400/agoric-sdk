@@ -4,7 +4,7 @@ import { E } from '@agoric/eventual-send';
 import { makeStore } from '@agoric/store';
 import { assert, details } from '@agoric/assert';
 
-import '../exported';
+import '../../../exported';
 
 /**
  * @typedef {Object} Deleter
