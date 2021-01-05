@@ -129,13 +129,14 @@ export const makeOfferAndFindInvitationAmount = (
     const deposited = depositPayouts(seat, payoutPursePetnames);
 
     const offerResultP = E(seat).getOfferResult();
-    await E(walletAdmin).saveOfferResult(
-      invitationDetails.handle,
-      offerResultP,
+    const offerResultSaved = offerResultP.then(offerResult =>
+      E(walletAdmin).saveOfferResult(invitationDetails.handle, offerResult),
     );
+
     return {
       seat,
       deposited,
+      offerResultSaved,
       invitationDetails,
     };
   };
