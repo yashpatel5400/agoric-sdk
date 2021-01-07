@@ -1,10 +1,9 @@
 // @ts-check
 
 import '../../../exported';
-import { makeNotifierKit, observeIteration } from '@agoric/notifier';
+import { observeIteration } from '@agoric/notifier';
 
 import { natSafeMath } from '../../contractSupport';
-import { scheduleLiquidation } from './scheduleLiquidation';
 
 // Update the debt by adding the new interest on every period, as
 // indicated by the periodAsyncIterable
@@ -25,32 +24,29 @@ export const calculateInterest = (oldDebtValue, interestRate) =>
   );
 
 /** @type {MakeDebtCalculator} */
-export const makeDebtCalculator = debtCalculatorConfig => {
+export const makeDebtCalculator = config => {
   const {
     calcInterestFn = calculateInterest,
     originalDebt,
     loanMath,
     periodAsyncIterable,
     interestRate,
-    zcf,
-    configMinusGetDebt,
-  } = debtCalculatorConfig;
+    updateState,
+  } = config;
   let debt = originalDebt;
-
-  const {
-    updater: debtNotifierUpdater,
-    notifier: debtNotifier,
-  } = makeNotifierKit();
 
   const getDebt = () => debt;
 
-  const config = { ...configMinusGetDebt, getDebt };
+  /** @type {LoanConfigWithBorrower} */
+  const configWithBorrower = {
+    ...config,
+    getDebt,
+  };
 
   const updateDebt = _state => {
     const interest = loanMath.make(calcInterestFn(debt.value, interestRate));
     debt = loanMath.add(debt, interest);
-    debtNotifierUpdater.updateState(debt);
-    scheduleLiquidation(zcf, config);
+    updateState(configWithBorrower);
   };
 
   /** @type {IterationObserver<undefined>} */
@@ -60,7 +56,6 @@ export const makeDebtCalculator = debtCalculatorConfig => {
     updateState: updateDebt,
     finish: updateDebt,
     fail: reason => {
-      debtNotifierUpdater.fail(reason);
       throw Error(reason);
     },
   };
@@ -68,10 +63,9 @@ export const makeDebtCalculator = debtCalculatorConfig => {
 
   // Initialize
   observeIteration(periodAsyncIterable, debtObserver);
-  debtNotifierUpdater.updateState(debt);
+  updateState(configWithBorrower);
 
   return harden({
     getDebt,
-    getDebtNotifier: () => debtNotifier,
   });
 };
