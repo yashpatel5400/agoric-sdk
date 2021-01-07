@@ -159,6 +159,18 @@ export function buildRootObject(_vatPowers) {
         await approve();
         return walletAdmin.suggestInstance(petname, boardId, dappOrigin);
       },
+      // NEW STUFF BELOW
+      // TODO: rename or merge with addOffer
+      async addOfferWithConfig(offerConfig) {
+        await approve();
+        return walletAdmin.addOfferWithConfig(offerConfig);
+      },
+      async depositInvitation(instance, description) {
+        // 
+      },
+      async getDisplayNotifier(dappDeterminedId) {
+        return offerResultDisplayNotifier;
+      },
     };
     return harden(bridge);
   };

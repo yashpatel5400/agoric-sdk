@@ -74,6 +74,8 @@
  *
  *   PromiseKit that includes a promise that resolves to a PriceQuote
  *   when liquidation is triggered
+ *
+ * @property {UpdateState} updateState
  */
 
 /**
@@ -132,6 +134,13 @@
  */
 
 /**
+ * @callback MakeDisplayNotifierKit
+ * @param {ContractFacet} zcf
+ * @returns {{ displayNotifier: Notifier<LoanState>, updateState:
+ * UpdateState }}
+ */
+
+/**
  * @callback CalcInterestFn
  * @param {number} oldDebtValue
  * @param {number} interestRate
@@ -160,19 +169,35 @@
  * @property {number} interestRate
  *
  * @property {ContractFacet} zcf
- * @property {ConfigMinusGetDebt} configMinusGetDebt
+ *
+ * @property {UpdateState} updateState
+ *
+ * @property {AutoswapInstance} autoswapInstance
+ *
+ * @property {PriceAuthority} priceAuthority
+ *
+ * @property {ZCFSeat} lenderSeat
+ *
+ * @property {ZCFSeat} collateralSeat
+ *
+ * @property {PromiseKit} liquidationPromiseKit
  */
 
 /**
- * @typedef {Object} ConfigMinusGetDebt
- * @property {ZCFSeat} collateralSeat
- * @property {PromiseRecord<any>} liquidationPromiseKit
- * @property {number} [mmr]
- * @property {InstanceHandle} autoswapInstance
- * @property {PriceAuthority} priceAuthority
- * @property {AsyncIterable<undefined>} periodAsyncIterable
+ * @callback UpdateState
+ * @param {LoanConfigWithBorrower} config
+ * @param {boolean=} liquidated
+ * @returns {Promise<void>}
+ */
+
+/**
+ * @typedef {Object} UIState
  * @property {number} interestRate
- * @property {ZCFSeat} lenderSeat
+ * @property {number} liquidationRatio
+ * @property {Amount} locked Amount of Collateral locked
+ * @property {Amount} debt Amount of Loan plus interest
+ * @property {number} collateralizationRatio depends on locked to debt ratio
+ * @property {boolean} liquidated boolean of whether liquidation occurred
  */
 
 /**
@@ -191,7 +216,7 @@
  *
  * Get a promise that will resolve if liquidation occurs
  *
- * @property {() => Notifier<Amount>} getDebtNotifier
+ * @property {() => Notifier<UIState>} getUINotifier
  *
  * Get a Notifier that will be updated when the current debt (an Amount with the Loan
  * Brand) changes. This will increase as interest is added.

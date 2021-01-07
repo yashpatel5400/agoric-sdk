@@ -17,6 +17,7 @@ export const scheduleLiquidation = (zcf, configWithBorrower) => {
     liquidationPromiseKit,
     getDebt,
     mmr,
+    updateState,
   } = configWithBorrower;
 
   const loanMath = zcf.getTerms().maths.Loan;
@@ -50,6 +51,7 @@ export const scheduleLiquidation = (zcf, configWithBorrower) => {
       const currentCollateral = collateralSeat.getAmountAllocated('Collateral');
       if (collateralMath.isEqual(amountIn, currentCollateral)) {
         liquidationPromiseKit.resolve(priceQuote);
+        updateState(configWithBorrower, true);
         liquidate(zcf, configWithBorrower);
       }
     })

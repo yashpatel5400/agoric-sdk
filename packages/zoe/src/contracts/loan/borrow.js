@@ -7,10 +7,10 @@ import { makePromiseKit } from '@agoric/promise-kit';
 
 import { assertProposalShape, trade, natSafeMath } from '../../contractSupport';
 
-import { scheduleLiquidation } from './scheduleLiquidation';
 import { calculateInterest, makeDebtCalculator } from './updateDebt';
 import { makeCloseLoanInvitation } from './close';
 import { makeAddCollateralInvitation } from './addCollateral';
+import { makeUINotifierKit } from './uiNotifier';
 
 /** @type {MakeBorrowInvitation} */
 export const makeBorrowInvitation = (zcf, config) => {
@@ -20,6 +20,7 @@ export const makeBorrowInvitation = (zcf, config) => {
     periodAsyncIterable,
     interestRate,
     lenderSeat,
+    autoswapInstance,
   } = config;
 
   // We can only lend what the lender has already escrowed.
@@ -110,6 +111,8 @@ export const makeBorrowInvitation = (zcf, config) => {
 
     const liquidationPromiseKit = makePromiseKit();
 
+    const { uiNotifier, updateState } = makeUINotifierKit(zcf);
+
     /** @type {DebtCalculatorConfig} */
     const debtCalculatorConfig = {
       calcInterestFn: calculateInterest,
@@ -118,15 +121,14 @@ export const makeBorrowInvitation = (zcf, config) => {
       periodAsyncIterable,
       interestRate,
       zcf,
-      configMinusGetDebt: {
-        ...config,
-        collateralSeat,
-        liquidationPromiseKit,
-      },
+      updateState,
+      autoswapInstance,
+      priceAuthority,
+      lenderSeat,
+      collateralSeat,
+      liquidationPromiseKit,
     };
-    const { getDebt, getDebtNotifier } = makeDebtCalculator(
-      harden(debtCalculatorConfig),
-    );
+    const { getDebt } = makeDebtCalculator(harden(debtCalculatorConfig));
 
     /** @type {LoanConfigWithBorrower} */
     const configWithBorrower = {
@@ -134,31 +136,29 @@ export const makeBorrowInvitation = (zcf, config) => {
       collateralSeat,
       getDebt,
       liquidationPromiseKit,
+      updateState,
     };
 
-    // Schedule the liquidation. If the liquidation cannot be scheduled
-    // because of a problem with a misconfigured priceAuthority, an
-    // error will be thrown and the borrower will be stuck with their
-    // loan and the lender will receive the collateral. It is
-    // important for the borrower to validate the priceAuthority for
-    // this reason.
-
-    scheduleLiquidation(zcf, configWithBorrower);
+    // initialize state
+    updateState(configWithBorrower);
 
     // TODO: Add ability to liquidate partially
     // TODO: Add ability to withdraw excess collateral
     // TODO: Add ability to repay partially
 
+    // Dapp can pass method names
+    const invitationMakers = {
+      RepayAndClose: () => makeCloseLoanInvitation(zcf, configWithBorrower),
+      AddCollateral: () => makeAddCollateralInvitation(zcf, configWithBorrower),
+    };
+
     /** @type {BorrowFacet} */
     const borrowFacet = {
-      makeCloseLoanInvitation: () =>
-        makeCloseLoanInvitation(zcf, configWithBorrower),
-      makeAddCollateralInvitation: () =>
-        makeAddCollateralInvitation(zcf, configWithBorrower),
-      getLiquidationPromise: () => liquidationPromiseKit.promise,
-      getDebtNotifier,
-      getRecentCollateralAmount: () =>
-        collateralSeat.getAmountAllocated('Collateral'),
+      uiNotifier,
+      invitationMakers,
+      custom: {
+        getLiquidationPromise: () => liquidationPromiseKit.promise,
+      },
     };
 
     return harden(borrowFacet);
