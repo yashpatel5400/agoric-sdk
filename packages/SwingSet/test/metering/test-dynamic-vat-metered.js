@@ -15,6 +15,7 @@ async function prepare() {
   // new (metered) dynamic vat
   const dynamicVatBundle = await bundleSource(
     new URL('metered-dynamic-vat.js', import.meta.url).pathname,
+    'nestedEvaluate',
   );
   const bootstrapBundle = await bundleSource(
     new URL('vat-load-dynamic.js', import.meta.url).pathname,
