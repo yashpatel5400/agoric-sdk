@@ -54,9 +54,6 @@ test('test bug scenario', async t => {
   const bldPoolAllocation = amountMath.make(bldKit.brand, 2196247730468n);
   const runPoolAllocation = amountMath.make(runKit.brand, 50825056949339n);
 
-  // Alice adds liquidity
-  // 10 moola = 5 central tokens at the time of the liquidity adding
-  // aka 2 moola = 1 central token
   const aliceProposal = harden({
     give: {
       Secondary: bldPoolAllocation,
@@ -106,4 +103,8 @@ test('test bug scenario', async t => {
   const offerResult = await E(seatP).getOfferResult();
 
   console.log(offerResult);
+
+  const outPayout = await E(seatP).getPayout('Out');
+
+  console.log(await E(bldKit.issuer).getAmountOf(outPayout));
 });

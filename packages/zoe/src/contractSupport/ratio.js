@@ -3,9 +3,10 @@
 import './types';
 import { assert, details as X, q } from '@agoric/assert';
 import { Nat } from '@agoric/nat';
+import { amountMath } from '@agoric/ertp';
 import { natSafeMath } from './safeMath';
 
-const { multiply, floorDivide, add, subtract } = natSafeMath;
+const { multiply, floorDivide, add, subtract, ceilDivide } = natSafeMath;
 
 // make a Ratio, which represents a fraction. It is a pass-by-copy record.
 //
@@ -106,6 +107,31 @@ export const multiplyBy = (amount, ratio) => {
   });
 };
 
+export const multiplyByCeilDivide = (amount, ratio) => {
+  // TODO(https://github.com/Agoric/agoric-sdk/pull/2310) after the refactoring
+  // coerce amount using a native amountMath operation.
+  assert(amount.brand, X`Expected an amount: ${amount}`);
+  Nat(amount.value);
+
+  assertIsRatio(ratio);
+  assert(
+    amount.brand === ratio.denominator.brand,
+    X`amount's brand ${q(amount.brand)} must match ratio's denominator ${q(
+      ratio.denominator.brand,
+    )}`,
+  );
+
+  // TODO(https://github.com/Agoric/agoric-sdk/pull/2310) after the refactoring
+  //  use amountMath's constructor here rather than building the record directly
+  return harden({
+    value: ceilDivide(
+      multiply(amount.value, ratio.numerator.value),
+      ratio.denominator.value,
+    ),
+    brand: ratio.numerator.brand,
+  });
+};
+
 export const divideBy = (amount, ratio) => {
   // TODO(https://github.com/Agoric/agoric-sdk/pull/2310) after the refactoring
   // coerce amount using a native AmountMath operation.
@@ -142,6 +168,26 @@ export const invertRatio = ratio => {
   );
 };
 
+export const addRatiosSameDenom = (left, right) => {
+  assertIsRatio(right);
+  assertIsRatio(left);
+  assert(
+    left.numerator.brand === left.denominator.brand &&
+      left.numerator.brand === right.numerator.brand &&
+      left.numerator.brand === right.denominator.brand,
+    X`all brands must match:  ${q(left)} ${q(right)}`,
+  );
+  assert(
+    amountMath.isEqual(left.denominator, right.denominator),
+    `must have the same denominator`,
+  );
+
+  return makeRatioFromAmounts(
+    amountMath.add(left.numerator, right.numerator),
+    left.denominator,
+  );
+};
+
 export const addRatios = (left, right) => {
   assertIsRatio(right);
   assertIsRatio(left);
@@ -154,6 +200,26 @@ export const addRatios = (left, right) => {
 
   return makeRatio(
     add(
+      multiply(left.numerator.value, right.denominator.value),
+      multiply(left.denominator.value, right.numerator.value),
+    ),
+    left.numerator.brand,
+    multiply(left.denominator.value, right.denominator.value),
+  );
+};
+
+export const subtractRatios = (left, right) => {
+  assertIsRatio(right);
+  assertIsRatio(left);
+  assert(
+    left.numerator.brand === left.denominator.brand &&
+      left.numerator.brand === right.numerator.brand &&
+      left.numerator.brand === right.denominator.brand,
+    X`all brands must match:  ${q(left)} ${q(right)}`,
+  );
+
+  return makeRatio(
+    subtract(
       multiply(left.numerator.value, right.denominator.value),
       multiply(left.denominator.value, right.numerator.value),
     ),
@@ -176,6 +242,25 @@ export const multiplyRatios = (left, right) => {
     multiply(left.numerator.value, right.numerator.value),
     left.numerator.brand,
     multiply(left.denominator.value, right.denominator.value),
+  );
+};
+
+export const divideRatios = (left, right) => {
+  assertIsRatio(right);
+  assertIsRatio(left);
+  assert(
+    left.numerator.brand === left.denominator.brand &&
+      left.numerator.brand === right.numerator.brand &&
+      left.numerator.brand === right.denominator.brand,
+    X`all brands must match:  ${q(left)} ${q(right)}`,
+  );
+
+  const rightInverted = invertRatio(right);
+
+  return makeRatio(
+    multiply(left.numerator.value, rightInverted.numerator.value),
+    left.numerator.brand,
+    multiply(left.denominator.value, rightInverted.denominator.value),
   );
 };
 
