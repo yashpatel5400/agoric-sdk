@@ -3,6 +3,10 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { test } from '@agoric/zoe/tools/prepare-test-env-ava';
 
+import jsc from 'jsverify';
+
+import { Nat } from '@agoric/nat';
+
 import { assert, details as X } from '@agoric/assert';
 import { amountMath, makeIssuerKit, MathKind } from '@agoric/ertp';
 import { assertRightsConserved } from '../../../src/contractFacet/rightsConservation';
@@ -12,14 +16,12 @@ import { assertAmountsEqual } from '../../zoeTestHelpers';
 import {
   multiplyByCeilDivide,
   makeRatio,
-  addRatios,
   subtractRatios,
   makeRatioFromAmounts,
-  divideRatios,
-  addRatiosSameDenom,
 } from '../../../src/contractSupport/ratio';
 
 import { natSafeMath } from '../../../src/contractSupport';
+import { getCurrentPrice } from './fixedNewSwap';
 
 const BASIS_POINTS = 10000n;
 const DEFAULT_POOL_FEE = 24n; // 0.0024 or .24%
@@ -118,6 +120,11 @@ const specifyRunIn = (
   protocolFeeBP,
   poolFeeBP,
 ) => {
+  assert(!amountMath.isEmpty(runPoolAllocation));
+  assert(!amountMath.isEmpty(secondaryPoolAllocation));
+
+  assert(amountMath.isGTE(runPoolAllocation, runAmountIn));
+
   // The protocol fee must always be collected in RUN, but the pool
   // fee is collected in the amount opposite of what is specified. So
   // in this case, it should be collected in secondaryBrand since the
@@ -161,10 +168,12 @@ const specifyRunIn = (
     poolFee,
   );
 
+  const userActuallyGives = amountMath.add(deltaRun, protocolFee);
+
   const result = {
     protocolFee,
     poolFee,
-    amountIn: amountInMinusProtocolFee,
+    amountIn: userActuallyGives,
     amountOut: deltaSecondaryMinusPoolFee,
     deltaRun,
     deltaSecondary,
@@ -173,7 +182,7 @@ const specifyRunIn = (
       secondaryPoolAllocation,
       deltaSecondary,
     ),
-    inReturnedToUser: amountMath.subtract(amountInMinusProtocolFee, deltaRun),
+    inReturnedToUser: amountMath.subtract(runAmountIn, userActuallyGives),
   };
   return result;
 };
@@ -181,35 +190,33 @@ const specifyRunIn = (
 const assertProtocolFee = (protocolFee, amountIn, protocolFeeBP) => {
   // protocolFee as a percent of amountIn + protocolFee
 
-  const protocolFeeRatio = makeRatioFromAmounts(
-    protocolFee,
-    amountMath.add(amountIn, protocolFee),
+  const protocolFeeRatio = makeRatioFromAmounts(protocolFee, amountIn);
+
+  const approximationBP =
+    (Number(protocolFeeRatio.numerator.value) * 10000) /
+    Number(protocolFeeRatio.denominator.value);
+
+  console.log('actualProtocolFeeBP', approximationBP);
+  assert(
+    approximationBP >= protocolFeeBP,
+    X`actualProtocolFeeBP was not greater: ${protocolFeeRatio}`,
   );
-
-  const atLeastRatio = makeRatio(protocolFeeBP, amountIn.brand, BASIS_POINTS);
-
-  // Assert that the actual fee charged is greater than or equal to the expected
-  // fee charge
-  // This will throw if the actual protocolFee was less than the
-  // expected protocolFee
-  subtractRatios(protocolFeeRatio, atLeastRatio);
 };
 
 const assertPoolFee = (poolFee, amountOut, poolFeeBP) => {
-  // poolFee as a percent of amountOut + poolee
+  // poolFee as a percent of amountOut + poolFee
 
   const poolFeeRatio = makeRatioFromAmounts(
     poolFee,
     amountMath.add(amountOut, poolFee),
   );
 
-  const atLeastRatio = makeRatio(poolFeeBP, amountOut.brand, BASIS_POINTS);
+  const approximationBP =
+    (Number(poolFeeRatio.numerator.value) * 10000) /
+    Number(poolFeeRatio.denominator.value);
 
-  // Assert that the actual fee charged is greater than or equal to the expected
-  // fee charge
-  // This will throw if the actual protocolFee was less than the
-  // expected protocolFee
-  subtractRatios(poolFeeRatio, atLeastRatio);
+  console.log('actualPoolFeeBP', approximationBP);
+  assert(approximationBP >= poolFeeBP);
 };
 
 const setupMintKits = () => {
@@ -296,8 +303,8 @@ test('test bug scenario new', async t => {
   const expected = {
     protocolFee: run(43800n),
     poolFee: bld(7567n),
-    amountIn: run(72956200n),
-    amountOut: bld(3145005n),
+    amountIn: run(72999997n), // buggy newswap quotes 72999951n
+    amountOut: bld(3145005n), // buggy newswap quotes 3145005n - the same
     deltaRun: run(72956197n),
     deltaSecondary: bld(3152572n),
     newRunPool: run(50825129905536n),
@@ -325,7 +332,7 @@ test('test small values', async t => {
   const expected = {
     protocolFee: run(4n),
     poolFee: bld(2n),
-    amountIn: run(5835n),
+    amountIn: run(5834n),
     amountOut: bld(459n),
     deltaRun: run(5830n),
     deltaSecondary: bld(461n),
@@ -342,4 +349,104 @@ test('test small values', async t => {
     expected,
     t,
   );
+});
+
+test('test bug scenario against fixed newSwap', async t => {
+  const mintKits = setupMintKits();
+  const { run, bld } = mintKits;
+  const bldPoolAllocationValue = 2196247730468n;
+  const runPoolAllocationValue = 50825056949339n;
+  const runValueIn = 73000000n;
+
+  const expected = {
+    protocolFee: run(43800n),
+    poolFee: bld(7567n), // 7566
+    amountIn: run(72999997n), // buggy newswap quotes 72999951n
+    amountOut: bld(3145005n), // buggy newswap quotes 3145005n - the same
+    deltaRun: run(72956197n),
+    deltaSecondary: bld(3152572n),
+    newRunPool: run(50825129905536n),
+    newSecondaryPool: bld(2196244577896n),
+    inReturnedToUser: run(3n),
+  };
+
+  const { amountIn, amountOut, protocolFee } = getCurrentPrice(
+    run(runPoolAllocationValue),
+    bld(bldPoolAllocationValue),
+    run(runValueIn),
+    DEFAULT_PROTOCOL_FEE,
+    DEFAULT_POOL_FEE,
+  );
+
+  // amountIn: run(72999997n) - amountIn is the same
+  // amountOut: bld(3145007n) - amount out is higher
+  // protocolFee: run(43773n) - protocolFee is less
+
+  const runPoolAllocation = run(runPoolAllocationValue);
+  const bldPoolAllocation = bld(bldPoolAllocationValue);
+  const deltaX = amountMath.subtract(amountIn, protocolFee);
+
+  // This includes the pool fee so it's only checking that including
+  // the pool fee, k is increasing.
+  assertKInvariantSellingX(
+    run(runPoolAllocationValue),
+    bld(bldPoolAllocationValue),
+    amountMath.subtract(amountIn, protocolFee),
+    amountOut,
+  );
+
+  const deltaY = calcDeltaYSellingX(
+    runPoolAllocation,
+    bldPoolAllocation,
+    deltaX,
+  );
+
+  const poolFee = amountMath.subtract(deltaY, amountOut);
+
+  console.log('poolFee', poolFee);
+
+  // This is violated: 5.996 BP not 6
+  // assertProtocolFee(protocolFee, amountIn, DEFAULT_PROTOCOL_FEE);
+
+  // This is violated 23.999444263463527 not 24
+  // assertPoolFee(poolFee, amountOut, DEFAULT_POOL_FEE);
+});
+
+test('jsverify constant product', t => {
+  const { bld, run } = setupMintKits();
+  const constantProduct = jsc.forall(
+    'nat',
+    'nat',
+    'nat',
+    (runValueInNat, runPoolAllocationNat, secondaryPoolAllocationNat) => {
+      const runValueIn = Nat(runValueInNat);
+      const runPoolAllocationValue = Nat(runPoolAllocationNat);
+      const secondaryPoolAllocationValue = Nat(secondaryPoolAllocationNat);
+
+      const oldK = runPoolAllocationValue * secondaryPoolAllocationValue;
+
+      const runAmountIn = run(runValueIn);
+      const runPoolAllocation = run(runPoolAllocationValue);
+      const bldPoolAllocation = bld(secondaryPoolAllocationValue);
+
+      const result = specifyRunIn(
+        runAmountIn,
+        runPoolAllocation,
+        bldPoolAllocation,
+        DEFAULT_PROTOCOL_FEE,
+        DEFAULT_POOL_FEE,
+      );
+
+      const newX = amountMath.add(result.newRunPool, result.deltaRun);
+      const newY = amountMath.subtract(
+        result.newSecondaryPool,
+        result.deltaSecondary,
+      );
+      const newK = natSafeMath.multiply(newX.value, newY.value);
+
+      return oldK >= newK;
+    },
+  );
+
+  t.true(jsc.check(constantProduct));
 });
