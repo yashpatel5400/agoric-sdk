@@ -16,7 +16,6 @@ import { assertAmountsEqual } from '../../zoeTestHelpers';
 import {
   multiplyByCeilDivide,
   makeRatio,
-  subtractRatios,
   makeRatioFromAmounts,
 } from '../../../src/contractSupport/ratio';
 
@@ -56,7 +55,7 @@ const multiplyByOtherBrandCeilDivide = (amount, ratio) => {
  *
  * @param {Amount} runAmount
  * @param {NatValue} protocolFeeBP
- * @returns
+ * @returns {Amount} the protocol fee in RUN
  */
 const calcProtocolFee = (runAmount, protocolFeeBP) => {
   const protocolFeeRatio = makeRatio(
@@ -68,6 +67,11 @@ const calcProtocolFee = (runAmount, protocolFeeBP) => {
   return multiplyByCeilDivide(runAmount, protocolFeeRatio);
 };
 
+/**
+ * @param {Amount} runOrSecondaryAmount
+ * @param {NatValue} poolFeeBP
+ * @returns {Amount}
+ */
 const calcPoolFee = (runOrSecondaryAmount, poolFeeBP) => {
   const poolFeeRatio = makeRatio(
     poolFeeBP,
@@ -101,6 +105,30 @@ const calcDeltaXSellingX = (x, y, deltaY) => {
   // deltaY / (y - deltaY ) * x
 };
 
+const calculateFeesSpecifyRunIn = (
+  runAmountIn,
+  runPoolAllocation,
+  secondaryPoolAllocation,
+  protocolFeeBP,
+  poolFeeBP,
+) => {
+  // Get a rough concept of how much the runAmountIn is worth in the
+  // secondary brand, then subtract fees
+
+  const estimatedAmountOut = calcDeltaYSellingX(
+    runPoolAllocation,
+    secondaryPoolAllocation,
+    runAmountIn,
+  );
+
+  const protocolFee = calcProtocolFee(runAmountIn, protocolFeeBP);
+  const poolFee = calcPoolFee(estimatedAmountOut, poolFeeBP);
+
+  const fees = harden({ protocolFee, poolFee });
+  console.log(fees);
+  return fees;
+};
+
 // xy <= (x + deltaX)(y - deltaY)
 const assertKInvariantSellingX = (x, y, deltaX, deltaY) => {
   const oldK = natSafeMath.multiply(x.value, y.value);
@@ -130,7 +158,13 @@ const specifyRunIn = (
   // in this case, it should be collected in secondaryBrand since the
   // amountIn is specified.
 
-  const protocolFee = calcProtocolFee(runAmountIn, protocolFeeBP);
+  const { protocolFee, poolFee } = calculateFeesSpecifyRunIn(
+    runAmountIn,
+    runPoolAllocation,
+    secondaryPoolAllocation,
+    protocolFeeBP,
+    poolFeeBP,
+  );
 
   const amountInMinusProtocolFee = amountMath.subtract(
     runAmountIn,
@@ -162,7 +196,6 @@ const specifyRunIn = (
 
   // We will take the pool fee explicitly from deltaSecondary, what the user is
   // getting back
-  const poolFee = calcPoolFee(deltaSecondary, poolFeeBP);
   const deltaSecondaryMinusPoolFee = amountMath.subtract(
     deltaSecondary,
     poolFee,
@@ -293,7 +326,7 @@ const conductTestSpecifyRunIn = (
   assertPoolFee(result.poolFee, result.amountOut, poolFeeBP);
 };
 
-test('test bug scenario new', async t => {
+test('test bug scenario', async t => {
   const mintKits = setupMintKits();
   const { run, bld } = mintKits;
   const bldPoolAllocationValue = 2196247730468n;
@@ -302,9 +335,9 @@ test('test bug scenario new', async t => {
 
   const expected = {
     protocolFee: run(43800n),
-    poolFee: bld(7567n),
+    poolFee: bld(7571n),
     amountIn: run(72999997n), // buggy newswap quotes 72999951n
-    amountOut: bld(3145005n), // buggy newswap quotes 3145005n - the same
+    amountOut: bld(3145001n), // buggy newswap quotes 3145005n
     deltaRun: run(72956197n),
     deltaSecondary: bld(3152572n),
     newRunPool: run(50825129905536n),
