@@ -25,13 +25,6 @@ test('test bug scenario', async t => {
     harden({ decimalPlaces: 6 }),
   );
   const zoe = makeZoe(fakeVatAdmin);
-  const invitationIssuer = await E(zoe).getInvitationIssuer();
-  const invitationBrand = await E(invitationIssuer).getBrand();
-
-  // Setup Alice
-  const aliceRunPayment = runKit.mint.mintPayment(
-    amountMath.make(runKit.brand, 100n * 10n ** 6n),
-  );
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -39,7 +32,7 @@ test('test bug scenario', async t => {
   const installation = await zoe.install(bundle);
   // This timer is only used to build quotes. Let's make it non-zero
   const fakeTimer = buildManualTimer(console.log, 30n);
-  const { instance, publicFacet } = await zoe.startInstance(
+  const { publicFacet } = await zoe.startInstance(
     installation,
     harden({ Central: runKit.issuer }),
     { timer: fakeTimer },
@@ -79,7 +72,7 @@ test('test bug scenario', async t => {
     `Alice added bld and run liquidity`,
   );
 
-  const liquidityPayout = await addLiquiditySeat.getPayout('Liquidity');
+  await addLiquiditySeat.getPayout('Liquidity');
 
   const priceQuote = await E(publicFacet).getPriceGivenAvailableInput(
     amountMath.make(runKit.brand, 73000000n),
