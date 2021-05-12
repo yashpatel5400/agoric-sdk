@@ -4,61 +4,143 @@ import { multiplyByCeilDivide, makeRatio } from '../../contractSupport/ratio';
 
 import { BASIS_POINTS } from './defaults';
 
-import { calcDeltaYSellingX } from './core';
+import { calcDeltaYSellingX, calcDeltaXSellingX } from './core';
 
 /**
- * Calculate the protocol fee given a runAmount
+ * Make a ratio given a nat representing basis points
  *
- * @param {Amount} runAmount
- * @param {NatValue} protocolFeeBP
- * @returns {Amount} the protocol fee in RUN
+ * @param {NatValue} feeBP
+ * @param {Brand} brandOfFee
+ * @returns {Ratio}
  */
-export const calcProtocolFee = (runAmount, protocolFeeBP) => {
-  const protocolFeeRatio = makeRatio(
-    protocolFeeBP,
-    runAmount.brand,
-    BASIS_POINTS,
-  );
-  // always round fees up
-  return multiplyByCeilDivide(runAmount, protocolFeeRatio);
+const makeFeeRatio = (feeBP, brandOfFee) => {
+  return makeRatio(feeBP, brandOfFee, BASIS_POINTS);
 };
 
 /**
- * Calculate the pool fee given an amount, which may be in RUN or
- * another brand
- *
- * @param {Amount} runOrSecondaryAmount
- * @param {NatValue} poolFeeBP
+ * @param {Amount} amount
+ * @param {Ratio} feeRatio
  * @returns {Amount}
  */
-export const calcPoolFee = (runOrSecondaryAmount, poolFeeBP) => {
-  const poolFeeRatio = makeRatio(
-    poolFeeBP,
-    runOrSecondaryAmount.brand,
-    BASIS_POINTS,
-  );
+const calcFee = (amount, feeRatio) => {
   // always round fees up
-  return multiplyByCeilDivide(runOrSecondaryAmount, poolFeeRatio);
+  return multiplyByCeilDivide(amount, feeRatio);
 };
 
-export const calculateFeesSpecifyRunIn = (
+// SwapIn uses calcDeltaYSellingX
+// SwapOut uses calcDeltaXSellingY
+
+const specifyRunInConfig = {
+  fn: calcDeltaYSellingX,
+  in: runBrand,
+  out: secondaryBrand,
+  poolFee: secondaryBrand,
+};
+const specifySecondaryInConfig = {
+  fn: calcDeltaYSellingX,
+  in: secondaryBrand,
+  out: runBrand,
+  poolFee: runBrand,
+};
+const specifyRunOutConfig = {
+  fn: calcDeltaXSellingX,
+  in: secondaryBrand,
+  out: runBrand,
+  poolFee: secondaryBrand,
+};
+const specifySecondaryOutConfig = {
+  fn: calcDeltaXSellingX,
+  in: runBrand,
+  out: secondaryBrand,
+  poolFee: runBrand,
+};
+
+const calcSwap = ({ fn, x, y, delta }) => {
+  return fn(x, y, delta);
+};
+ 
+export const calculateFees = (
   runAmountIn,
   runPoolAllocation,
   secondaryPoolAllocation,
-  protocolFeeBP,
-  poolFeeBP,
+  protocolFeeRatio,
+  poolFeeRatio,
+  config,
 ) => {
-  // Get a rough concept of how much the runAmountIn is worth in the
-  // secondary brand, then subtract fees
-
-  const estimatedAmountOut = calcDeltaYSellingX(
+  // Get a rough estimation in both brands of the amount to be swapped
+  const estimatedAmount = config.fn(
+    // TODO: how to specify which is x and which is y?
     runPoolAllocation,
     secondaryPoolAllocation,
     runAmountIn,
   );
 
-  const protocolFee = calcProtocolFee(runAmountIn, protocolFeeBP);
+  const protocolFee = calcFee(runAmountIn, protocolFeeRatio);
+  const poolFee = calcFee(estimatedAmountOut, poolFeeRatio);
+
+  const fees = harden({ protocolFee, poolFee });
+  return fees;
+};
+
+export const calculateFeesSpecifySecondaryIn = (
+  secondaryAmountIn,
+  runPoolAllocation,
+  secondaryPoolAllocation,
+  protocolFeeBP,
+  poolFeeBP,
+) => {
+  const estimatedAmountOut = calcDeltaYSellingX(
+    secondaryPoolAllocation,
+    runPoolAllocation,
+    secondaryAmountIn,
+  );
+
+  const protocolFee = calcProtocolFee(estimatedAmountOut, protocolFeeBP);
   const poolFee = calcPoolFee(estimatedAmountOut, poolFeeBP);
+
+  const fees = harden({ protocolFee, poolFee });
+  return fees;
+};
+
+export const calculateFeesSpecifyRunOut = (
+  runAmountOut,
+  runPoolAllocation,
+  secondaryPoolAllocation,
+  protocolFeeBP,
+  poolFeeBP,
+) => {
+  // x is secondary and amountIn, y is run
+  const estimatedAmountIn = calcDeltaXSellingX(
+    secondaryPoolAllocation,
+    runPoolAllocation,
+    runAmountOut,
+  );
+
+  const protocolFee = calcProtocolFee(runAmountOut, protocolFeeBP);
+
+  // The opposite of what is specified
+  const poolFee = calcPoolFee(estimatedAmountIn, poolFeeBP);
+
+  const fees = harden({ protocolFee, poolFee });
+  return fees;
+};
+
+export const calculateFeesSpecifySecondaryOut = (
+  secondaryAmountOut,
+  runPoolAllocation,
+  secondaryPoolAllocation,
+  protocolFeeBP,
+  poolFeeBP,
+) => {
+  // x is run and amountIn, y is secondary
+  const estimatedAmountIn = calcDeltaXSellingX(
+    runPoolAllocation,
+    secondaryPoolAllocation,
+    secondaryAmountOut,
+  );
+
+  const protocolFee = calcProtocolFee(estimatedAmountIn, protocolFeeBP);
+  const poolFee = calcPoolFee(estimatedAmountIn, poolFeeBP);
 
   const fees = harden({ protocolFee, poolFee });
   return fees;
