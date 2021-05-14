@@ -1,6 +1,6 @@
 // @ts-check
 
-import { amountMath } from '@agoric/ertp';
+import { AmountMath } from '@agoric/ertp';
 import { multiplyByCeilDivide, makeRatio } from '../../contractSupport/ratio';
 
 import { BASIS_POINTS } from './defaults';
@@ -18,7 +18,7 @@ const makeFeeRatio = (feeBP, brandOfFee) => {
 
 const minimum = (left, right) => {
   // If left is greater or equal, return right. Otherwise return left.
-  return amountMath.isGTE(left, right) ? right : left;
+  return AmountMath.isGTE(left, right) ? right : left;
 };
 
 /**

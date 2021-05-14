@@ -1,7 +1,7 @@
 // @ts-check
 
 import { assert, details as X } from '@agoric/assert';
-import { amountMath } from '@agoric/ertp';
+import { AmountMath } from '@agoric/ertp';
 
 import { makeRatioFromAmounts } from '../../contractSupport/ratio';
 import { natSafeMath } from '../../contractSupport';
@@ -18,8 +18,8 @@ import { BASIS_POINTS } from './defaults';
  */
 export const checkKInvariantSellingX = (x, y, deltaX, deltaY) => {
   const oldK = natSafeMath.multiply(x.value, y.value);
-  const newX = amountMath.add(x, deltaX);
-  const newY = amountMath.subtract(y, deltaY);
+  const newX = AmountMath.add(x, deltaX);
+  const newY = AmountMath.subtract(y, deltaY);
   const newK = natSafeMath.multiply(newX.value, newY.value);
   return oldK <= newK;
 };
@@ -34,8 +34,8 @@ export const checkKInvariantSellingX = (x, y, deltaX, deltaY) => {
  */
 export const assertKInvariantSellingX = (x, y, deltaX, deltaY) => {
   const oldK = natSafeMath.multiply(x.value, y.value);
-  const newX = amountMath.add(x, deltaX);
-  const newY = amountMath.subtract(y, deltaY);
+  const newX = AmountMath.add(x, deltaX);
+  const newY = AmountMath.subtract(y, deltaY);
   const newK = natSafeMath.multiply(newX.value, newY.value);
   assert(
     oldK <= newK,
@@ -75,12 +75,12 @@ export const assertProtocolFee = (protocolFee, amountIn, protocolFeeBP) => {
  * @returns {void}
  */
 export const assertPoolFee = (poolFee, amountOut, poolFeeBP) => {
-  if (amountMath.isEmpty(amountOut)) {
+  if (AmountMath.isEmpty(amountOut)) {
     return;
   }
   const poolFeeRatio = makeRatioFromAmounts(
     poolFee,
-    amountMath.add(amountOut, poolFee),
+    AmountMath.add(amountOut, poolFee),
   );
 
   const approximationBP =

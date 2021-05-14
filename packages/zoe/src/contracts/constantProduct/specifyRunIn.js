@@ -1,7 +1,6 @@
 // @ts-check
 
-import { assert, details as X } from '@agoric/assert';
-import { AmountMath, amountMath } from '@agoric/ertp';
+import { AmountMath } from '@agoric/ertp';
 
 import { assertRightsConserved } from '../../contractFacet/rightsConservation';
 import { calculateFees } from './calcFees';
@@ -49,14 +48,14 @@ export const specifyRunIn = (
     poolFee,
     swapperGives: userActuallyGives,
     swapperGets: AmountMath.subtract(amountOut, poolFee),
-    swapperGiveRefund: amountMath.subtract(
+    swapperGiveRefund: AmountMath.subtract(
       swapperAllocation.In,
       userActuallyGives,
     ),
     deltaX: amountIn,
     deltaY: amountOut,
-    newX: amountMath.add(poolAllocation.Central, amountIn),
-    newY: amountMath.subtract(poolAllocation.Secondary, amountOut),
+    newX: AmountMath.add(poolAllocation.Central, amountIn),
+    newY: AmountMath.subtract(poolAllocation.Secondary, amountOut),
   };
 
   return result;
