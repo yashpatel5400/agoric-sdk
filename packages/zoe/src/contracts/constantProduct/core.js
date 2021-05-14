@@ -1,6 +1,7 @@
 // @ts-check
 
-import { amountMath } from '@agoric/ertp';
+import { assert } from '@agoric/assert';
+import { AmountMath } from '@agoric/ertp';
 
 import { natSafeMath } from '../../contractSupport';
 
@@ -77,10 +78,79 @@ export const calcDeltaYSellingX = (x, y, deltaX) => {
  * @returns {Amount} deltaX - the amount of Brand X to be added
  */
 export const calcDeltaXSellingX = (x, y, deltaY) => {
-  const yMinusDeltaY = amountMath.subtract(y, deltaY);
+  const yMinusDeltaY = AmountMath.subtract(y, deltaY);
   const yRatio = makeRatioFromAmounts(deltaY, yMinusDeltaY);
   // Result is an amount in x.brand
   // We want to err on the side of the pool, so this should be a
   // ceiling divide so that more deltaX is taken
   return multiplyByOtherBrandCeilDivide(x, yRatio);
+};
+
+const getXAndY = (swapperAllocation, poolAllocation, swapperProposal) => {
+  // Regardless of whether we are specifying the amountIn or the
+  // amountOut, the xBrand is the brand of the amountIn.
+  const xBrand = swapperAllocation.In.brand;
+  const secondaryBrand = poolAllocation.Secondary.brand;
+
+  const deltas = {
+    deltaX: swapperAllocation.In,
+    wantedDeltaY: swapperProposal.want.Out,
+  };
+
+  if (secondaryBrand === xBrand) {
+    return harden({
+      x: poolAllocation.Secondary,
+      y: poolAllocation.Central,
+      ...deltas,
+    });
+  } else {
+    return harden({
+      y: poolAllocation.Central,
+      x: poolAllocation.Secondary,
+      ...deltas,
+    });
+  }
+};
+
+const swapIn = (swapperAllocation, poolAllocation, swapperProposal) => {
+  const { x, y, deltaX, wantedDeltaY } = getXAndY(
+    swapperAllocation,
+    poolAllocation,
+    swapperProposal,
+  );
+  const deltaY = calcDeltaYSellingX(x, y, deltaX);
+  const reducedDeltaX = calcDeltaXSellingX(x, y, deltaY);
+
+  assert(
+    AmountMath.isGTE(wantedDeltaY, deltaY),
+    `The amount given ${deltaX} is not enough to produce the wanted amount ${wantedDeltaY}`,
+  );
+
+  return harden({
+    amountIn: reducedDeltaX,
+    amountOut: deltaY,
+  });
+};
+
+const swapOut = (swapperAllocation, poolAllocation, swapperProposal) => {
+  const { x, y, deltaX, wantedDeltaY } = getXAndY(
+    swapperAllocation,
+    poolAllocation,
+    swapperProposal,
+  );
+  const requiredDeltaX = calcDeltaXSellingX(x, y, wantedDeltaY);
+  const improvedDeltaY = calcDeltaYSellingX(x, y, requiredDeltaX);
+
+  assert(
+    AmountMath.isGTE(
+      deltaX,
+      requiredDeltaX,
+      `The amount given ${deltaX} is not enough to produce the wanted amount ${wantedDeltaY}`,
+    ),
+  );
+
+  return harden({
+    amountIn: requiredDeltaX,
+    amountOut: improvedDeltaY,
+  });
 };
