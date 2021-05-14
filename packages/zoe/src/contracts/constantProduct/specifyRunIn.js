@@ -1,11 +1,11 @@
 // @ts-check
 
 import { assert, details as X } from '@agoric/assert';
-import { amountMath } from '@agoric/ertp';
+import { AmountMath, amountMath } from '@agoric/ertp';
 
 import { assertRightsConserved } from '../../contractFacet/rightsConservation';
-import { calculateFeesSpecifyRunIn } from './calcFees';
-import { calcDeltaXSellingX, calcDeltaYSellingX } from './core';
+import { calculateFees } from './calcFees';
+import { swapIn } from './core';
 import {
   assertKInvariantSellingX,
   assertPoolFee,
@@ -13,103 +13,63 @@ import {
 } from './invariants';
 
 export const specifyRunIn = (
-  runAmountIn,
-  runPoolAllocation,
-  secondaryPoolAllocation,
-  protocolFeeBP,
-  poolFeeBP,
+  swapperAllocation,
+  poolAllocation,
+  swapperProposal,
+  protocolFeeRatio,
+  poolFeeRatio,
 ) => {
-  // Basic sanity checks
-  assert(
-    !amountMath.isEmpty(runPoolAllocation),
-    X`runPoolAllocation cannot be empty`,
-  );
-  assert(
-    !amountMath.isEmpty(secondaryPoolAllocation),
-    X`secondaryPoolAllocation cannot be empty`,
-  );
-  assert(!amountMath.isEmpty(runAmountIn), X`runAmountIn cannot be empty`);
-
-  // Do we want to ensure this?
-  assert(
-    amountMath.isGTE(runPoolAllocation, runAmountIn),
-    X`runPoolAllocation must be greater than runAmountIn`,
-  );
-
   // The protocol fee must always be collected in RUN, but the pool
-  // fee is collected in the amount opposite of what is specified. So
-  // in this case, it should be collected in secondaryBrand since the
-  // amountIn is specified.
+  // fee is collected in the amount opposite of what is specified.
 
-  const fees = calculateFeesSpecifyRunIn(
-    runAmountIn,
-    runPoolAllocation,
-    secondaryPoolAllocation,
-    protocolFeeBP,
-    poolFeeBP,
+  const { protocolFee, poolFee } = calculateFees(
+    swapperAllocation,
+    poolAllocation,
+    swapperProposal,
+    protocolFeeRatio,
+    poolFeeRatio,
+    swapIn,
   );
-  const { protocolFee } = fees;
-  let { poolFee } = fees;
 
-  const amountInMinusProtocolFee = amountMath.subtract(
-    runAmountIn,
+  const amountInMinusProtocolFee = AmountMath.subtract(
+    swapperAllocation.In,
     protocolFee,
   );
 
-  const deltaSecondary = calcDeltaYSellingX(
-    runPoolAllocation,
-    secondaryPoolAllocation,
-    amountInMinusProtocolFee,
+  const { amountIn, amountOut } = swapIn(
+    { In: amountInMinusProtocolFee },
+    poolAllocation,
+    swapperProposal,
   );
 
-  const deltaRun = calcDeltaXSellingX(
-    runPoolAllocation,
-    secondaryPoolAllocation,
-    deltaSecondary,
-  );
-
-  const deltaSecondary2 = calcDeltaYSellingX(
-    runPoolAllocation,
-    secondaryPoolAllocation,
-    deltaRun,
-  );
-
-  assert(
-    amountMath.isEqual(deltaSecondary, deltaSecondary2),
-    `We should get the same answer`,
-  );
-
-  // We will take the pool fee explicitly from deltaSecondary, what the user is
-  // getting back
-  let deltaSecondaryMinusPoolFee;
-
-  // If the poolFee is greater than deltaSecondary, deltaSecondaryMinusPoolFee
-  // should be empty, and the poolFee should be the whole of
-  // deltaSecondary, whatever that is.
-  if (amountMath.isGTE(deltaSecondary, poolFee)) {
-    deltaSecondaryMinusPoolFee = amountMath.subtract(deltaSecondary, poolFee);
-  } else {
-    deltaSecondaryMinusPoolFee = amountMath.makeEmptyFromAmount(deltaSecondary);
-    poolFee = deltaSecondary;
-  }
-
-  const userActuallyGives = amountMath.add(deltaRun, protocolFee);
+  const userActuallyGives = AmountMath.add(amountIn, protocolFee);
 
   const result = {
     protocolFee,
     poolFee,
-    amountIn: userActuallyGives,
-    amountOut: deltaSecondaryMinusPoolFee,
-    deltaRun,
-    deltaSecondary,
-    newRunPool: amountMath.add(runPoolAllocation, deltaRun),
-    newSecondaryPool: amountMath.subtract(
-      secondaryPoolAllocation,
-      deltaSecondary,
+    swapperGives: userActuallyGives,
+    swapperGets: AmountMath.subtract(amountOut, poolFee),
+    swapperGiveRefund: amountMath.subtract(
+      swapperAllocation.In,
+      userActuallyGives,
     ),
-    inReturnedToUser: amountMath.subtract(runAmountIn, userActuallyGives),
+    deltaX: amountIn,
+    deltaY: amountOut,
+    newX: amountMath.add(poolAllocation.Central, amountIn),
+    newY: amountMath.subtract(poolAllocation.Secondary, amountOut),
   };
 
+  return result;
+};
+
+const checkAllInvariants = (
+  runPoolAllocation,
+  secondaryPoolAllocation,
+  runAmountIn,
+  protocolFeeBP,
+  poolFeeBP,
+  result,
+) => {
   // double check invariants
   assertKInvariantSellingX(
     runPoolAllocation,
@@ -135,6 +95,4 @@ export const specifyRunIn = (
   assertRightsConserved(priorAmounts, newAmounts);
   assertProtocolFee(result.protocolFee, result.amountIn, protocolFeeBP);
   assertPoolFee(result.poolFee, result.amountOut, poolFeeBP);
-
-  return result;
 };

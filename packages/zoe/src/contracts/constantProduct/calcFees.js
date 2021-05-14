@@ -1,5 +1,6 @@
 // @ts-check
 
+import { amountMath } from '@agoric/ertp';
 import { multiplyByCeilDivide, makeRatio } from '../../contractSupport/ratio';
 
 import { BASIS_POINTS } from './defaults';
@@ -15,6 +16,11 @@ const makeFeeRatio = (feeBP, brandOfFee) => {
   return makeRatio(feeBP, brandOfFee, BASIS_POINTS);
 };
 
+const minimum = (left, right) => {
+  // If left is greater or equal, return right. Otherwise return left.
+  return amountMath.isGTE(left, right) ? right : left;
+};
+
 /**
  * @param {{ amountIn: Amount, amountOut: Amount}} amounts - an array of two amounts in different
  * brands. We must select the amount of the same brand as the feeRatio.
@@ -25,7 +31,10 @@ const calcFee = ({ amountIn, amountOut }, feeRatio) => {
   const sameBrandAmount =
     amountIn.brand === feeRatio.numerator.brand ? amountIn : amountOut;
   // Always round fees up
-  return multiplyByCeilDivide(sameBrandAmount, feeRatio);
+  const fee = multiplyByCeilDivide(sameBrandAmount, feeRatio);
+
+  // Fee cannot be more than what exists
+  return minimum(fee, sameBrandAmount);
 };
 
 // SwapIn uses calcDeltaYSellingX

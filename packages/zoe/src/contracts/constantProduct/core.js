@@ -56,7 +56,7 @@ const multiplyByOtherBrandCeilDivide = (amount, ratio) => {
  * @returns {Amount} deltaY - the amount of Brand Y to be taken out
  */
 export const calcDeltaYSellingX = (x, y, deltaX) => {
-  const deltaXPlusX = amountMath.add(deltaX, x);
+  const deltaXPlusX = AmountMath.add(deltaX, x);
   const xRatio = makeRatioFromAmounts(deltaX, deltaXPlusX);
   // Result is an amount in y.brand
   // We would want to err on the side of the pool, so this should be a
@@ -86,7 +86,7 @@ export const calcDeltaXSellingX = (x, y, deltaY) => {
   return multiplyByOtherBrandCeilDivide(x, yRatio);
 };
 
-const getXAndY = (swapperAllocation, poolAllocation, swapperProposal) => {
+const getXY = (swapperAllocation, poolAllocation, swapperProposal) => {
   // Regardless of whether we are specifying the amountIn or the
   // amountOut, the xBrand is the brand of the amountIn.
   const xBrand = swapperAllocation.In.brand;
@@ -112,45 +112,30 @@ const getXAndY = (swapperAllocation, poolAllocation, swapperProposal) => {
   }
 };
 
-const swapIn = (swapperAllocation, poolAllocation, swapperProposal) => {
-  const { x, y, deltaX, wantedDeltaY } = getXAndY(
-    swapperAllocation,
-    poolAllocation,
-    swapperProposal,
-  );
+const swapInReduced = ({ x, y, deltaX }) => {
   const deltaY = calcDeltaYSellingX(x, y, deltaX);
   const reducedDeltaX = calcDeltaXSellingX(x, y, deltaY);
-
-  assert(
-    AmountMath.isGTE(wantedDeltaY, deltaY),
-    `The amount given ${deltaX} is not enough to produce the wanted amount ${wantedDeltaY}`,
-  );
-
   return harden({
     amountIn: reducedDeltaX,
     amountOut: deltaY,
   });
 };
 
-const swapOut = (swapperAllocation, poolAllocation, swapperProposal) => {
-  const { x, y, deltaX, wantedDeltaY } = getXAndY(
-    swapperAllocation,
-    poolAllocation,
-    swapperProposal,
-  );
+const swapOutImproved = ({ x, y, wantedDeltaY }) => {
   const requiredDeltaX = calcDeltaXSellingX(x, y, wantedDeltaY);
   const improvedDeltaY = calcDeltaYSellingX(x, y, requiredDeltaX);
-
-  assert(
-    AmountMath.isGTE(
-      deltaX,
-      requiredDeltaX,
-      `The amount given ${deltaX} is not enough to produce the wanted amount ${wantedDeltaY}`,
-    ),
-  );
-
   return harden({
     amountIn: requiredDeltaX,
     amountOut: improvedDeltaY,
   });
+};
+
+export const swapIn = (swapperAllocation, poolAllocation, swapperProposal) => {
+  const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
+  return swapInReduced(XY);
+};
+
+export const swapOut = (swapperAllocation, poolAllocation, swapperProposal) => {
+  const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
+  return swapOutImproved(XY);
 };
