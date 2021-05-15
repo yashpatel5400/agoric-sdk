@@ -1,19 +1,19 @@
 // @ts-check
 
-import { amountMath, makeIssuerKit, MathKind } from '@agoric/ertp';
+import { AmountMath, makeIssuerKit, AssetKind } from '@agoric/ertp';
 
 export const setupMintKits = () => {
   const runKit = makeIssuerKit(
     'RUN',
-    MathKind.NAT,
+    AssetKind.NAT,
     harden({ decimalPlaces: 6 }),
   );
   const bldKit = makeIssuerKit(
     'BLD',
-    MathKind.NAT,
+    AssetKind.NAT,
     harden({ decimalPlaces: 6 }),
   );
-  const run = value => amountMath.make(runKit.brand, value);
-  const bld = value => amountMath.make(bldKit.brand, value);
+  const run = value => AmountMath.make(runKit.brand, value);
+  const bld = value => AmountMath.make(bldKit.brand, value);
   return { runKit, bldKit, run, bld };
 };

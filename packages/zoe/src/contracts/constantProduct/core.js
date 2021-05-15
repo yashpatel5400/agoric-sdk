@@ -1,11 +1,10 @@
 // @ts-check
 
-import { assert } from '@agoric/assert';
 import { AmountMath } from '@agoric/ertp';
 
 import { natSafeMath } from '../../contractSupport';
-
 import { makeRatioFromAmounts } from '../../contractSupport/ratio';
+import { getXY } from './getXY';
 
 // TODO: fix this up with more assertions and rename
 // Used for multiplying y by a ratio with both numerators and
@@ -15,14 +14,12 @@ import { makeRatioFromAmounts } from '../../contractSupport/ratio';
  * @param {Ratio} ratio
  * @returns {Amount}
  */
-const multiplyByOtherBrand = (amount, ratio) => {
-  return harden({
-    value: natSafeMath.floorDivide(
-      natSafeMath.multiply(amount.value, ratio.numerator.value),
-      ratio.denominator.value,
-    ),
-    brand: amount.brand,
-  });
+const multiplyByOtherBrandFloorDivide = (amount, ratio) => {
+  const value = natSafeMath.floorDivide(
+    natSafeMath.multiply(amount.value, ratio.numerator.value),
+    ratio.denominator.value,
+  );
+  return AmountMath.make(amount.brand, value);
 };
 
 // TODO: fix this up with more assertions and rename
@@ -34,13 +31,11 @@ const multiplyByOtherBrand = (amount, ratio) => {
  * @returns {Amount}
  */
 const multiplyByOtherBrandCeilDivide = (amount, ratio) => {
-  return harden({
-    value: natSafeMath.ceilDivide(
-      natSafeMath.multiply(amount.value, ratio.numerator.value),
-      ratio.denominator.value,
-    ),
-    brand: amount.brand,
-  });
+  const value = natSafeMath.ceilDivide(
+    natSafeMath.multiply(amount.value, ratio.numerator.value),
+    ratio.denominator.value,
+  );
+  return AmountMath.make(amount.brand, value);
 };
 
 /**
@@ -61,7 +56,7 @@ export const calcDeltaYSellingX = (x, y, deltaX) => {
   // Result is an amount in y.brand
   // We would want to err on the side of the pool, so this should be a
   // floorDivide so that less deltaY is given out
-  return multiplyByOtherBrand(y, xRatio);
+  return multiplyByOtherBrandFloorDivide(y, xRatio);
 };
 
 /**
@@ -86,32 +81,6 @@ export const calcDeltaXSellingX = (x, y, deltaY) => {
   return multiplyByOtherBrandCeilDivide(x, yRatio);
 };
 
-const getXY = (swapperAllocation, poolAllocation, swapperProposal) => {
-  // Regardless of whether we are specifying the amountIn or the
-  // amountOut, the xBrand is the brand of the amountIn.
-  const xBrand = swapperAllocation.In.brand;
-  const secondaryBrand = poolAllocation.Secondary.brand;
-
-  const deltas = {
-    deltaX: swapperAllocation.In,
-    wantedDeltaY: swapperProposal.want.Out,
-  };
-
-  if (secondaryBrand === xBrand) {
-    return harden({
-      x: poolAllocation.Secondary,
-      y: poolAllocation.Central,
-      ...deltas,
-    });
-  } else {
-    return harden({
-      y: poolAllocation.Central,
-      x: poolAllocation.Secondary,
-      ...deltas,
-    });
-  }
-};
-
 const swapInReduced = ({ x, y, deltaX }) => {
   const deltaY = calcDeltaYSellingX(x, y, deltaX);
   const reducedDeltaX = calcDeltaXSellingX(x, y, deltaY);
@@ -130,12 +99,12 @@ const swapOutImproved = ({ x, y, wantedDeltaY }) => {
   });
 };
 
-export const swapIn = (swapperAllocation, poolAllocation, swapperProposal) => {
+export const swapInNoFees = (swapperAllocation, poolAllocation, swapperProposal) => {
   const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
   return swapInReduced(XY);
 };
 
-export const swapOut = (swapperAllocation, poolAllocation, swapperProposal) => {
+export const swapOutNoFees = (swapperAllocation, poolAllocation, swapperProposal) => {
   const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
   return swapOutImproved(XY);
 };
