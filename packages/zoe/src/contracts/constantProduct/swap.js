@@ -1,5 +1,6 @@
 // @ts-check
 
+import { assert, details as X } from '@agoric/assert';
 import { AmountMath } from '@agoric/ertp';
 import { calculateFees } from './calcFees';
 
@@ -36,6 +37,27 @@ const addOrSubtractFromPool = (addOrSub, poolAllocation, amount) => {
   }
 };
 
+const assertGreaterThanZeroHelper = (amount, name) => {
+  assert(
+    !AmountMath.isGTE(AmountMath.makeEmptyFromAmount(amount), amount),
+    X`${name} was not greater than 0: ${amount}`,
+  );
+};
+
+const assertWantedAvailable = (poolAllocation, swapperProposal) => {
+  if (swapperProposal.want.Out.brand === poolAllocation.Central.brand) {
+    assert(
+      AmountMath.isGTE(poolAllocation.Central, swapperProposal.want.Out),
+      X`The poolAllocation ${poolAllocation.Central} did not have enough to satisfy the wanted amountOut ${swapperProposal.want.Out}`,
+    );
+  } else {
+    assert(
+      !AmountMath.isGTE(swapperProposal.want.Out, poolAllocation.Secondary),
+      X`The poolAllocation ${poolAllocation.Secondary} did not have enough to satisfy the wanted amountOut ${swapperProposal.want.Out}`,
+    );
+  }
+};
+
 export const swap = (
   swapperAllocation,
   poolAllocation,
@@ -44,6 +66,21 @@ export const swap = (
   poolFeeRatio,
   swapFn,
 ) => {
+  assertGreaterThanZeroHelper(poolAllocation.Central, 'poolAllocation.Central');
+  assertGreaterThanZeroHelper(
+    poolAllocation.Secondary,
+    'poolAllocation.Secondary',
+  );
+  assertGreaterThanZeroHelper(swapperAllocation.In, 'allocation.In');
+  assertGreaterThanZeroHelper(swapperProposal.want.Out, 'proposal.want.Out');
+  assertWantedAvailable(poolAllocation, swapperProposal);
+
+  console.log('swapperAllocation', swapperAllocation);
+  console.log('poolAllocation', poolAllocation);
+  console.log('swapperProposal', swapperProposal);
+  // console.log('protocolFeeRatio', protocolFeeRatio);
+  // console.log('poolFeeRatio', poolFeeRatio);
+
   // The protocol fee must always be collected in RUN, but the pool
   // fee is collected in the amount opposite of what is specified.
 
@@ -56,6 +93,8 @@ export const swap = (
     swapFn,
   );
 
+  console.log(fees);
+
   const amountInMinusFees = subtractFees(swapperAllocation.In, fees);
 
   const { amountIn, amountOut } = swapFn(
@@ -64,8 +103,18 @@ export const swap = (
     swapperProposal,
   );
 
+  console.log('amountIn', amountIn);
+  console.log('amountOut', amountOut);
+
   const swapperGives = addFees(amountIn, fees);
+
+  console.log('swapperGives', swapperGives);
   const swapperGets = subtractFees(amountOut, fees);
+
+  assert(
+    AmountMath.isGTE(swapperAllocation.In, swapperGives),
+    X`The amount provided ${swapperAllocation.In} is not enough. ${swapperGives} is required.`,
+  );
 
   const result = {
     protocolFee: fees.protocolFee,
@@ -78,6 +127,8 @@ export const swap = (
     newX: addOrSubtractFromPool(AmountMath.add, poolAllocation, amountIn),
     newY: addOrSubtractFromPool(AmountMath.subtract, poolAllocation, amountOut),
   };
+
+  console.log(result);
 
   return result;
 };

@@ -17,7 +17,7 @@ const testGetPrice = (
   t.deepEqual(output, expectedOutput);
 };
 
-const getInputPricethrows = (
+const getInputPriceThrows = (
   t,
   { inputReserve, outputReserve, inputValue },
   message,
@@ -36,7 +36,7 @@ const testGetOutputPrice = (
   t.deepEqual(input, expectedInput);
 };
 
-const getOutputPricethrows = (
+const getOutputPriceThrows = (
   t,
   { inputReserve, outputReserve, outputValue },
   message,
@@ -55,7 +55,7 @@ test('getInputPrice no reserves', t => {
     inputValue: 1n,
   };
   const message = /inputReserve .* must be positive/;
-  getInputPricethrows(t, input, message);
+  getInputPriceThrows(t, input, message);
 });
 
 test('getInputPrice ok 2', t => {
@@ -115,7 +115,7 @@ test('getInputPrice negative', t => {
     inputValue: -7n,
   };
   const message = '-7 is negative';
-  getInputPricethrows(t, input, message);
+  getInputPriceThrows(t, input, message);
 });
 
 test('getInputPrice bad reserve 1', t => {
@@ -125,7 +125,7 @@ test('getInputPrice bad reserve 1', t => {
     inputValue: 347n,
   };
   const message = /outputReserve .* must be positive/;
-  getInputPricethrows(t, input, message);
+  getInputPriceThrows(t, input, message);
 });
 
 test('getInputPrice bad reserve 2', t => {
@@ -135,7 +135,7 @@ test('getInputPrice bad reserve 2', t => {
     inputValue: 828n,
   };
   const message = /inputReserve .* must be positive/;
-  getInputPricethrows(t, input, message);
+  getInputPriceThrows(t, input, message);
 });
 
 test('getInputPrice zero input', t => {
@@ -145,7 +145,7 @@ test('getInputPrice zero input', t => {
     inputValue: 0n,
   };
   const message = /inputValue .* must be positive/;
-  getInputPricethrows(t, input, message);
+  getInputPriceThrows(t, input, message);
 });
 
 test('getInputPrice big product', t => {
@@ -190,7 +190,7 @@ test('getOutputPrice zero output reserve', t => {
     outputValue: 37n,
   };
   const message = /outputReserve .* must be positive/;
-  getOutputPricethrows(t, input, message);
+  getOutputPriceThrows(t, input, message);
 });
 
 test('getOutputPrice zero input reserve', t => {
@@ -200,7 +200,7 @@ test('getOutputPrice zero input reserve', t => {
     outputValue: 37n,
   };
   const message = /inputReserve .* must be positive/;
-  getOutputPricethrows(t, input, message);
+  getOutputPriceThrows(t, input, message);
 });
 
 test('getOutputPrice too much output', t => {
@@ -210,7 +210,7 @@ test('getOutputPrice too much output', t => {
     outputValue: 20923n,
   };
   const message = /outputReserve .* must be greater than outputValue .*/;
-  getOutputPricethrows(t, input, message);
+  getOutputPriceThrows(t, input, message);
 });
 
 test('getOutputPrice too much output 2', t => {
@@ -220,7 +220,7 @@ test('getOutputPrice too much output 2', t => {
     outputValue: 345n,
   };
   const message = /outputReserve .* must be greater than outputValue .*/;
-  getOutputPricethrows(t, input, message);
+  getOutputPriceThrows(t, input, message);
 });
 
 test('getOutputPrice big product', t => {
