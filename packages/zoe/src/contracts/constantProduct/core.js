@@ -99,12 +99,20 @@ const swapOutImproved = ({ x, y, wantedDeltaY }) => {
   });
 };
 
-export const swapInNoFees = (swapperAllocation, poolAllocation, swapperProposal) => {
+export const swapInNoFees = (
+  swapperAllocation,
+  poolAllocation,
+  swapperProposal,
+) => {
   const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
   return swapInReduced(XY);
 };
 
-export const swapOutNoFees = (swapperAllocation, poolAllocation, swapperProposal) => {
+export const swapOutNoFees = (
+  swapperAllocation,
+  poolAllocation,
+  swapperProposal,
+) => {
   const XY = getXY(swapperAllocation, poolAllocation, swapperProposal);
   return swapOutImproved(XY);
 };
