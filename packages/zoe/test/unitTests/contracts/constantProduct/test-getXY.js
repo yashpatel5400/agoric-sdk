@@ -10,65 +10,41 @@ import { setupMintKits } from './setupMints';
 test('swap Central for Secondary', t => {
   const { run, bld } = setupMintKits();
 
-  const swapperAllocation = {
-    In: run(2000n),
-  };
+  const amountGiven = run(2000n);
   const poolAllocation = {
     Central: run(102902920n),
     Secondary: bld(203838393n),
   };
-  const swapperProposal = {
-    give: {
-      In: run(2000n),
-    },
-    want: {
-      Out: bld(2819n),
-    },
-    exit: {
-      onDemand: null,
-    },
-  };
+  const amountWanted = bld(2819n);
   const { x, y, deltaX, wantedDeltaY } = getXY(
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
   );
 
   t.deepEqual(x, poolAllocation.Central);
   t.deepEqual(y, poolAllocation.Secondary);
-  t.deepEqual(deltaX, swapperAllocation.In);
-  t.deepEqual(wantedDeltaY, swapperProposal.want.Out);
+  t.deepEqual(deltaX, amountGiven);
+  t.deepEqual(wantedDeltaY, amountWanted);
 });
 
 test('swap Secondary for Central', t => {
   const { run, bld } = setupMintKits();
 
-  const swapperAllocation = {
-    In: bld(2000n),
-  };
+  const amountGiven = bld(2000n);
   const poolAllocation = {
     Central: run(102902920n),
     Secondary: bld(203838393n),
   };
-  const swapperProposal = {
-    give: {
-      In: bld(2000n),
-    },
-    want: {
-      Out: run(2819n),
-    },
-    exit: {
-      onDemand: null,
-    },
-  };
+  const amountWanted = run(2819n);
   const { x, y, deltaX, wantedDeltaY } = getXY(
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
   );
 
   t.deepEqual(x, poolAllocation.Secondary);
   t.deepEqual(y, poolAllocation.Central);
-  t.deepEqual(deltaX, swapperAllocation.In);
-  t.deepEqual(wantedDeltaY, swapperProposal.want.Out);
+  t.deepEqual(deltaX, amountGiven);
+  t.deepEqual(wantedDeltaY, amountWanted);
 });

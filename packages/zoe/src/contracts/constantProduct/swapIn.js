@@ -4,16 +4,16 @@ import { swap } from './swap';
 import { swapInNoFees } from './core';
 
 export const swapIn = (
-  swapperAllocation,
+  amountGiven,
   poolAllocation,
-  swapperProposal,
+  amountWanted,
   protocolFeeRatio,
   poolFeeRatio,
 ) => {
   return swap(
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
     protocolFeeRatio,
     poolFeeRatio,
     swapInNoFees,

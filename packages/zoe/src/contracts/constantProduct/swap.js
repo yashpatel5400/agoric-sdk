@@ -39,29 +39,29 @@ const addOrSubtractFromPool = (addOrSub, poolAllocation, amount) => {
 
 const assertGreaterThanZeroHelper = (amount, name) => {
   assert(
-    !AmountMath.isGTE(AmountMath.makeEmptyFromAmount(amount), amount),
-    X`${name} was not greater than 0: ${amount}`,
+    amount && !AmountMath.isGTE(AmountMath.makeEmptyFromAmount(amount), amount),
+    X`${name} must be greater than 0: ${amount}`,
   );
 };
 
-const assertWantedAvailable = (poolAllocation, swapperProposal) => {
-  if (swapperProposal.want.Out.brand === poolAllocation.Central.brand) {
+const assertWantedAvailable = (poolAllocation, amountWanted) => {
+  if (amountWanted.brand === poolAllocation.Central.brand) {
     assert(
-      AmountMath.isGTE(poolAllocation.Central, swapperProposal.want.Out),
-      X`The poolAllocation ${poolAllocation.Central} did not have enough to satisfy the wanted amountOut ${swapperProposal.want.Out}`,
+      AmountMath.isGTE(poolAllocation.Central, amountWanted),
+      X`The poolAllocation ${poolAllocation.Central} did not have enough to satisfy the wanted amountOut ${amountWanted}`,
     );
   } else {
     assert(
-      !AmountMath.isGTE(swapperProposal.want.Out, poolAllocation.Secondary),
-      X`The poolAllocation ${poolAllocation.Secondary} did not have enough to satisfy the wanted amountOut ${swapperProposal.want.Out}`,
+      !AmountMath.isGTE(amountWanted, poolAllocation.Secondary),
+      X`The poolAllocation ${poolAllocation.Secondary} did not have enough to satisfy the wanted amountOut ${amountWanted}`,
     );
   }
 };
 
 export const swap = (
-  swapperAllocation,
+  amountGiven,
   poolAllocation,
-  swapperProposal,
+  amountWanted,
   protocolFeeRatio,
   poolFeeRatio,
   swapFn,
@@ -71,49 +71,37 @@ export const swap = (
     poolAllocation.Secondary,
     'poolAllocation.Secondary',
   );
-  assertGreaterThanZeroHelper(swapperAllocation.In, 'allocation.In');
-  assertGreaterThanZeroHelper(swapperProposal.want.Out, 'proposal.want.Out');
-  assertWantedAvailable(poolAllocation, swapperProposal);
-
-  console.log('swapperAllocation', swapperAllocation);
-  console.log('poolAllocation', poolAllocation);
-  console.log('swapperProposal', swapperProposal);
-  // console.log('protocolFeeRatio', protocolFeeRatio);
-  // console.log('poolFeeRatio', poolFeeRatio);
+  assertGreaterThanZeroHelper(amountGiven, 'amountGiven');
+  assertGreaterThanZeroHelper(amountWanted, 'amountWanted');
+  assertWantedAvailable(poolAllocation, amountWanted);
 
   // The protocol fee must always be collected in RUN, but the pool
   // fee is collected in the amount opposite of what is specified.
 
   const fees = calculateFees(
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
     protocolFeeRatio,
     poolFeeRatio,
     swapFn,
   );
 
-  console.log(fees);
-
-  const amountInMinusFees = subtractFees(swapperAllocation.In, fees);
+  const amountInMinusFees = subtractFees(amountGiven, fees);
 
   const { amountIn, amountOut } = swapFn(
-    { In: amountInMinusFees },
+    amountInMinusFees,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
   );
-
-  console.log('amountIn', amountIn);
-  console.log('amountOut', amountOut);
 
   const swapperGives = addFees(amountIn, fees);
 
-  console.log('swapperGives', swapperGives);
   const swapperGets = subtractFees(amountOut, fees);
 
   assert(
-    AmountMath.isGTE(swapperAllocation.In, swapperGives),
-    X`The amount provided ${swapperAllocation.In} is not enough. ${swapperGives} is required.`,
+    AmountMath.isGTE(amountGiven, swapperGives),
+    X`The amount provided ${amountGiven} is not enough. ${swapperGives} is required.`,
   );
 
   const result = {
@@ -121,14 +109,12 @@ export const swap = (
     poolFee: fees.poolFee,
     swapperGives,
     swapperGets,
-    swapperGiveRefund: AmountMath.subtract(swapperAllocation.In, swapperGives),
+    swapperGiveRefund: AmountMath.subtract(amountGiven, swapperGives),
     deltaX: amountIn,
     deltaY: amountOut,
     newX: addOrSubtractFromPool(AmountMath.add, poolAllocation, amountIn),
     newY: addOrSubtractFromPool(AmountMath.subtract, poolAllocation, amountOut),
   };
-
-  console.log(result);
 
   return result;
 };

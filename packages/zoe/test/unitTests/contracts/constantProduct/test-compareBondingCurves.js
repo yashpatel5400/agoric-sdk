@@ -13,24 +13,19 @@ import { makeRatio } from '../../../../src/contractSupport';
 // charged.
 const prepareSwapInTest = ({ inputReserve, outputReserve, inputValue }) => {
   const { run, bld, runKit, bldKit } = setupMintKits();
-  const swapperAllocation = harden({
-    In: run(inputValue),
-  });
+  const amountGiven = run(inputValue);
   const poolAllocation = harden({
     Central: run(inputReserve),
     Secondary: bld(outputReserve),
   });
-  const swapperProposal = harden({
-    give: { In: run(inputValue) },
-    want: { Out: bld(3n) },
-  });
+  const amountWanted = bld(3n);
   const protocolFeeRatio = makeRatio(0n, runKit.brand, BASIS_POINTS);
   const poolFeeRatio = makeRatio(3n, bldKit.brand, BASIS_POINTS);
 
   const args = [
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
     protocolFeeRatio,
     poolFeeRatio,
   ];
@@ -63,25 +58,20 @@ const getInputPriceThrows = (t, inputs, message) => {
 // regardless of what brand is the amountIn, because no run fee is
 // charged.
 const prepareSwapOutTest = ({ inputReserve, outputReserve, outputValue }) => {
-  const { run, bld, runKit, bldKit } = setupMintKits();
-  const swapperAllocation = harden({
-    In: run(10000n), // hard-coded
-  });
+  const { run, bld, runKit } = setupMintKits();
+  const amountGiven = run(10000n); // hard-coded
   const poolAllocation = harden({
     Central: run(inputReserve),
     Secondary: bld(outputReserve),
   });
-  const swapperProposal = harden({
-    give: { In: run(10000n) }, // hard-coded
-    want: { Out: bld(outputValue) },
-  });
+  const amountWanted = bld(outputValue);
   const protocolFeeRatio = makeRatio(0n, runKit.brand, BASIS_POINTS);
   const poolFeeRatio = makeRatio(30n, runKit.brand, BASIS_POINTS);
 
   const args = [
-    swapperAllocation,
+    amountGiven,
     poolAllocation,
-    swapperProposal,
+    amountWanted,
     protocolFeeRatio,
     poolFeeRatio,
   ];

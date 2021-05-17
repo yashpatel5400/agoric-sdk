@@ -3,22 +3,22 @@
 
 /**
  *
- * @param {{ In: Amount }} swapperAllocation
+ * @param {Amount} amountGiven
  * @param {{ Central: Amount, Secondary: Amount }} poolAllocation
- * @param {ProposalRecord} swapperProposal
+ * @param {Amount} amountWanted
  * @returns {{ x: Amount, y: Amount, deltaX: Amount, wantedDeltaY:
  * Amount }}
  */
-export const getXY = (swapperAllocation, poolAllocation, swapperProposal) => {
+export const getXY = (amountGiven, poolAllocation, amountWanted) => {
   // Regardless of whether we are specifying the amountIn or the
   // amountOut, the xBrand is the brand of the amountIn.
-  const xBrand = swapperAllocation.In.brand;
+  const xBrand = amountGiven.brand;
   const secondaryBrand = poolAllocation.Secondary.brand;
   const centralBrand = poolAllocation.Central.brand;
 
   const deltas = {
-    deltaX: swapperAllocation.In,
-    wantedDeltaY: swapperProposal.want.Out,
+    deltaX: amountGiven,
+    wantedDeltaY: amountWanted,
   };
 
   if (secondaryBrand === xBrand) {

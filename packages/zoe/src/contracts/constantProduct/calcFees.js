@@ -41,15 +41,15 @@ const calcFee = ({ amountIn, amountOut }, feeRatio) => {
 // SwapOut uses calcDeltaXSellingX
 
 export const calculateFees = (
-  swapperAllocation,
+  amountGiven,
   poolAllocation,
-  swapperProposal,
+  amountWanted,
   protocolFeeRatio,
   poolFeeRatio,
   swapFn,
 ) => {
   // Get a rough estimation in both brands of the amount to be swapped
-  const estimation = swapFn(swapperAllocation, poolAllocation, swapperProposal);
+  const estimation = swapFn(amountGiven, poolAllocation, amountWanted);
 
   const protocolFee = calcFee(estimation, protocolFeeRatio);
   const poolFee = calcFee(estimation, poolFeeRatio);

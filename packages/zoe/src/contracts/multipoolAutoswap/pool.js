@@ -12,10 +12,14 @@ import {
   calcValueToRemove,
   trade,
   calcSecondaryRequired,
+  makeRatio,
 } from '../../contractSupport';
+
+import { swapIn } from '../constantProduct/swapIn';
 
 import '../../../exported';
 import { makePriceAuthority } from './priceAuthority';
+import { BASIS_POINTS } from '../constantProduct/defaults';
 
 const POOL_FEE = 30n;
 /**
@@ -122,34 +126,21 @@ export const makeAddPool = (
         outputBrand,
         feeBP = POOL_FEE,
       ) => {
-        assertPoolInitialized(pool);
-        const { inputReserve, outputReserve } = getReserves(
-          pool,
-          inputAmount.brand,
-          outputBrand,
+        const amountWanted = AmountMath.make(outputBrand, 1n);
+        const poolFeeRatio = makeRatio(feeBP, outputBrand, BASIS_POINTS);
+        const protocolFeeRatio = makeRatio(0n, outputBrand, BASIS_POINTS);
+        console.log('INPUT', inputAmount);
+        const result = swapIn(
+          inputAmount,
+          poolSeat.getCurrentAllocation(),
+          amountWanted,
+          protocolFeeRatio,
+          poolFeeRatio,
         );
-        assert(isNatValue(inputAmount.value));
-        if (AmountMath.isEmpty(inputAmount)) {
-          return {
-            amountOut: AmountMath.makeEmpty(outputBrand),
-            amountIn: AmountMath.makeEmpty(inputAmount.brand),
-          };
-        }
-        const valueOut = getInputPrice(
-          inputAmount.value,
-          inputReserve,
-          outputReserve,
-          feeBP,
-        );
-        const valueIn = getOutputPrice(
-          valueOut,
-          inputReserve,
-          outputReserve,
-          feeBP,
-        );
+        // TODO: add poolFee to the pool?
         return {
-          amountOut: AmountMath.make(valueOut, outputBrand),
-          amountIn: AmountMath.make(valueIn, inputAmount.brand),
+          amountOut: result.amountOut,
+          amountIn: result.amountIn,
         };
       },
 
