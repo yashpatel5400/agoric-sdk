@@ -49,10 +49,10 @@ export const calculateFees = (
   swapFn,
 ) => {
   // Get a rough estimation in both brands of the amount to be swapped
-  const estimation = swapFn(amountGiven, poolAllocation, amountWanted);
+  const estimation = swapFn({ amountGiven, poolAllocation, amountWanted });
 
   const protocolFee = calcFee(estimation, protocolFeeRatio);
   const poolFee = calcFee(estimation, poolFeeRatio);
 
-  return harden({ protocolFee, poolFee });
+  return harden({ protocolFee, poolFee, ...estimation });
 };

@@ -6,8 +6,6 @@ import { AssetKind, AmountMath, isNatValue } from '@agoric/ertp/';
 import { makeNotifierKit } from '@agoric/notifier';
 
 import {
-  getInputPrice,
-  getOutputPrice,
   calcLiqValueToMint,
   calcValueToRemove,
   trade,
@@ -16,6 +14,7 @@ import {
 } from '../../contractSupport';
 
 import { swapIn } from '../constantProduct/swapIn';
+import { swapOut } from '../constantProduct/swapOut';
 
 import '../../../exported';
 import { makePriceAuthority } from './priceAuthority';
@@ -29,6 +28,7 @@ const POOL_FEE = 30n;
  * @param {Brand} centralBrand
  * @param {Timer} timer
  * @param {IssuerKit} quoteIssuerKit
+ * @param {bigint} poolFee
  */
 export const makeAddPool = (
   zcf,
@@ -37,6 +37,7 @@ export const makeAddPool = (
   centralBrand,
   timer,
   quoteIssuerKit,
+  poolFee = POOL_FEE,
 ) => {
   const makePool = (liquidityZcfMint, poolSeat, secondaryBrand) => {
     let liqTokenSupply = 0n;
@@ -45,6 +46,8 @@ export const makeAddPool = (
       issuer: liquidityIssuer,
     } = liquidityZcfMint.getIssuerRecord();
     const { notifier, updater } = makeNotifierKit();
+    // TODO: update with the real amount
+    const protocolFeeRatio = makeRatio(0n, centralBrand, BASIS_POINTS);
 
     const updateState = pool =>
       // TODO: when governance can change the interest rate, include it here
@@ -92,21 +95,6 @@ export const makeAddPool = (
         X`pool not initialized`,
       );
 
-    const getReserves = (pool, inputBrand, outputBrand) => {
-      let inputReserve;
-      let outputReserve;
-      if (isSecondary(outputBrand) && centralBrand === inputBrand) {
-        inputReserve = pool.getCentralAmount().value;
-        outputReserve = pool.getSecondaryAmount().value;
-      } else if (isSecondary(inputBrand) && centralBrand === outputBrand) {
-        inputReserve = pool.getSecondaryAmount().value;
-        outputReserve = pool.getCentralAmount().value;
-      } else {
-        throw Error('brands must be central and secondary');
-      }
-      return { inputReserve, outputReserve };
-    };
-
     /** @type {Pool} */
     const pool = {
       getLiquiditySupply: () => liqTokenSupply,
@@ -121,15 +109,10 @@ export const makeAddPool = (
       // The caller wants to sell inputAmount. if that could produce at most N,
       // but they could also get N by only selling inputAmount - epsilon
       // we'll reply with { amountIn: inputAmount - epsilon, amountOut: N }.
-      getPriceGivenAvailableInput: (
-        inputAmount,
-        outputBrand,
-        feeBP = POOL_FEE,
-      ) => {
+      getPriceGivenAvailableInput: (inputAmount, outputBrand) => {
+        assertPoolInitialized(pool);
+        const poolFeeRatio = makeRatio(poolFee, outputBrand, BASIS_POINTS);
         const amountWanted = AmountMath.make(outputBrand, 1n);
-        const poolFeeRatio = makeRatio(feeBP, outputBrand, BASIS_POINTS);
-        const protocolFeeRatio = makeRatio(0n, outputBrand, BASIS_POINTS);
-        console.log('INPUT', inputAmount);
         const result = swapIn(
           inputAmount,
           poolSeat.getCurrentAllocation(),
@@ -137,49 +120,29 @@ export const makeAddPool = (
           protocolFeeRatio,
           poolFeeRatio,
         );
-        // TODO: add poolFee to the pool?
         return {
-          amountOut: result.amountOut,
-          amountIn: result.amountIn,
+          amountOut: result.swapperGets,
+          amountIn: result.swapperGives,
         };
       },
 
       // The caller wants at least outputAmount. if that requires at least N,
       // but they can get outputAmount + delta for N, we'll reply with
       // { amountIn: N, amountOut: outputAmount + delta }.
-      getPriceGivenRequiredOutput: (
-        inputBrand,
-        outputAmount,
-        feeBP = POOL_FEE,
-      ) => {
+      getPriceGivenRequiredOutput: (inputBrand, outputAmount) => {
         assertPoolInitialized(pool);
-        const { inputReserve, outputReserve } = getReserves(
-          pool,
-          inputBrand,
-          outputAmount.brand,
-        );
-        assert(isNatValue(outputAmount.value));
-        if (AmountMath.isEmpty(outputAmount)) {
-          return {
-            amountOut: AmountMath.makeEmpty(outputAmount.brand),
-            amountIn: AmountMath.makeEmpty(inputBrand),
-          };
-        }
-        const valueIn = getOutputPrice(
-          outputAmount.value,
-          inputReserve,
-          outputReserve,
-          feeBP,
-        );
-        const valueOut = getInputPrice(
-          valueIn,
-          inputReserve,
-          outputReserve,
-          feeBP,
+        const poolFeeRatio = makeRatio(poolFee, inputBrand, BASIS_POINTS);
+        const inputAmount = AmountMath.make(inputBrand, 1n);
+        const result = swapOut(
+          inputAmount,
+          poolSeat.getCurrentAllocation(),
+          outputAmount,
+          protocolFeeRatio,
+          poolFeeRatio,
         );
         return {
-          amountOut: AmountMath.make(valueOut, outputAmount.brand),
-          amountIn: AmountMath.make(valueIn, inputBrand),
+          amountOut: result.swapperGets,
+          amountIn: result.swapperGives,
         };
       },
       addLiquidity: zcfSeat => {
@@ -200,13 +163,13 @@ export const makeAddPool = (
         // To calculate liquidity, we'll need to calculate alpha from the primary
         // token's value before, and the value that will be added to the pool
         const secondaryOut = AmountMath.make(
+          secondaryBrand,
           calcSecondaryRequired(
             userAllocation.Central.value,
             centralAmount.value,
             secondaryAmount.value,
             secondaryIn.value,
           ),
-          secondaryBrand,
         );
 
         // Central was specified precisely so offer must provide enough secondary.
@@ -225,21 +188,21 @@ export const makeAddPool = (
         const liquidityValueIn = liquidityIn.value;
         assert(isNatValue(liquidityValueIn));
         const centralTokenAmountOut = AmountMath.make(
+          centralBrand,
           calcValueToRemove(
             liqTokenSupply,
             pool.getCentralAmount().value,
             liquidityValueIn,
           ),
-          centralBrand,
         );
 
         const tokenKeywordAmountOut = AmountMath.make(
+          secondaryBrand,
           calcValueToRemove(
             liqTokenSupply,
             pool.getSecondaryAmount().value,
             liquidityValueIn,
           ),
-          secondaryBrand,
         );
 
         liqTokenSupply -= liquidityValueIn;

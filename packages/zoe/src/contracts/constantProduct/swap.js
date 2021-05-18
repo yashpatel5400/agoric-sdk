@@ -87,29 +87,26 @@ export const swap = (
     swapFn,
   );
 
-  const amountInMinusFees = subtractFees(amountGiven, fees);
-
-  const { amountIn, amountOut } = swapFn(
-    amountInMinusFees,
+  const { amountIn, amountOut } = swapFn({
+    amountGiven: subtractFees(fees.amountIn, fees),
     poolAllocation,
     amountWanted,
-  );
+  });
 
   const swapperGives = addFees(amountIn, fees);
-
   const swapperGets = subtractFees(amountOut, fees);
 
-  assert(
-    AmountMath.isGTE(amountGiven, swapperGives),
-    X`The amount provided ${amountGiven} is not enough. ${swapperGives} is required.`,
-  );
+  // assert(
+  //   AmountMath.isGTE(amountGiven, swapperGives),
+  //   X`The amount provided ${amountGiven} is not enough. ${swapperGives} is required.`,
+  // );
 
   const result = {
     protocolFee: fees.protocolFee,
     poolFee: fees.poolFee,
     swapperGives,
     swapperGets,
-    swapperGiveRefund: AmountMath.subtract(amountGiven, swapperGives),
+    // swapperGiveRefund: AmountMath.subtract(amountGiven, swapperGives),
     deltaX: amountIn,
     deltaY: amountOut,
     newX: addOrSubtractFromPool(AmountMath.add, poolAllocation, amountIn),
