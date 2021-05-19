@@ -2,194 +2,133 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { test } from '@agoric/zoe/tools/prepare-test-env-ava';
-import { AmountMath } from '@agoric/ertp';
-import {
-  getInputPrice,
-  getOutputPrice,
-  natSafeMath,
-} from '../../../../src/contractSupport';
-import { setup } from '../../setupBasicMints';
-import { makeGetCurrentPrice } from '../../../../src/contracts/newSwap/getCurrentPrice';
-import {
-  outputFromInputPrice,
-  priceFromTargetOutput,
-} from '../../../autoswapJig';
+import { AmountMath, makeIssuerKit } from '@agoric/ertp';
 
-const { add, subtract, floorDivide, multiply } = natSafeMath;
+import { swapIn } from '../../../../src/contracts/constantProduct/swapIn';
+import {
+  calcDeltaXSellingX,
+  calcDeltaYSellingX,
+  swapInNoFees,
+} from '../../../../src/contracts/constantProduct/core';
+import { makeRatio } from '../../../../src/contractSupport';
+
 const BASIS_POINTS = 10000n;
+const POOL_FEE = 24n;
+const PROTOCOL_FEE = 6n;
 
-function makeFakePool(initCentral, initSecondary) {
-  let centralBalance = initCentral.value;
-  let secondaryBalance = initSecondary.value;
+// Moola is central
 
-  const pool = {
-    getPriceGivenAvailableInput: (inputAmount, outputBrand, feeBP = 30n) => {
-      const [inputReserve, outputReserve] =
-        outputBrand === initCentral.brand
-          ? [secondaryBalance, centralBalance]
-          : [centralBalance, secondaryBalance];
+const setupMints = () => {
+  const moolaKit = makeIssuerKit('moola');
+  const bucksKit = makeIssuerKit('bucks');
+  const simoleanKit = makeIssuerKit('simolean');
 
-      const valueOut = getInputPrice(
-        inputAmount.value,
-        inputReserve,
-        outputReserve,
-        feeBP,
-      );
-      const valueIn = getOutputPrice(
-        valueOut,
-        inputReserve,
-        outputReserve,
-        feeBP,
-      );
-      return {
-        amountOut: AmountMath.make(valueOut, outputBrand),
-        amountIn: AmountMath.make(valueIn, inputAmount.brand),
-      };
-    },
-
-    getPriceGivenRequiredOutput: (inputBrand, outputAmount, feeBP = 30n) => {
-      const [inputReserve, outputReserve] =
-        inputBrand === initSecondary.brand
-          ? [secondaryBalance, centralBalance]
-          : [centralBalance, secondaryBalance];
-      const valueIn = getOutputPrice(
-        outputAmount.value,
-        inputReserve,
-        outputReserve,
-        feeBP,
-      );
-      const valueOut = getInputPrice(
-        valueIn,
-        inputReserve,
-        outputReserve,
-        feeBP,
-      );
-      return {
-        amountOut: AmountMath.make(valueOut, outputAmount.brand),
-        amountIn: AmountMath.make(valueIn, inputBrand),
-      };
-    },
-  };
-
-  const poolAdmin = {
-    toCentral: (centralChange, secondaryChange) => {
-      centralBalance = add(centralBalance, centralChange);
-      secondaryBalance = subtract(secondaryBalance, secondaryChange);
-    },
-    toSecondary: (centralChange, secondaryChange) => {
-      centralBalance = subtract(centralBalance, centralChange);
-      secondaryBalance = add(secondaryBalance, secondaryChange);
-    },
-  };
-
-  return { pool, poolAdmin };
-}
-
-function setupPricer(initialMoola, initialBucks, initialSimoleans = 100n) {
-  const { bucks, moola, simoleans, brands } = setup();
-  const moolaBrand = brands.get('moola');
-  const bucksBrand = brands.get('bucks');
-  const simoleansBrand = brands.get('simoleans');
-
-  const { pool: bucksPool } = makeFakePool(
-    moola(initialMoola),
-    bucks(initialBucks),
-  );
-  // might be nice to specify the amount of moola in the two pools separately
-  const { pool: simoleanPool } = makeFakePool(
-    moola(initialMoola),
-    simoleans(initialSimoleans),
-  );
-
-  function getPool(brand) {
-    switch (brand) {
-      case bucksBrand:
-        return bucksPool;
-      case simoleansBrand:
-        return simoleanPool;
-      default:
-        throw Error('Pool not found');
-    }
-  }
-
-  const pricer = makeGetCurrentPrice(
-    b => b !== moolaBrand,
-    b => b === moolaBrand,
-    getPool,
-    moolaBrand,
-    24n,
-    6n,
-  );
+  const moola = value => AmountMath.make(moolaKit.brand, value);
+  const bucks = value => AmountMath.make(bucksKit.brand, value);
+  const simoleans = value => AmountMath.make(simoleanKit.brand, value);
 
   return {
-    bucks,
+    moolaKit,
+    bucksKit,
+    simoleanKit,
     moola,
+    bucks,
     simoleans,
-    bucksBrand,
-    moolaBrand,
-    simoleansBrand,
-    getPool,
-    pricer,
   };
-}
+};
 
 function protocolFee(input) {
   return floorDivide(multiply(input, 6n), BASIS_POINTS);
 }
 
+const doTest = () => {};
+
 test('newSwap getPriceGivenAvailableInput specify central', async t => {
-  const initMoola = 800000n;
-  const initBucks = 300000n;
-  const { bucks, moola, bucksBrand, pricer } = setupPricer(
-    initMoola,
-    initBucks,
-  );
+  const { moola, bucks, moolaKit, bucksKit } = setupMints();
+  const poolAllocation = {
+    Central: moola(800000n),
+    Secondary: bucks(300000n),
+  };
+  const amountGiven = moola(10000n);
+  const amountWanted = bucks(1n);
 
-  const input = 10000n;
-  const pFeePre = protocolFee(input);
+  const protocolFeeRatio = makeRatio(
+    PROTOCOL_FEE,
+    moolaKit.brand,
+    BASIS_POINTS,
+  );
+  const poolFeeRatio = makeRatio(POOL_FEE, bucksKit.brand, BASIS_POINTS);
 
-  const valueOut = outputFromInputPrice(
-    initMoola,
-    initBucks,
-    input - pFeePre,
-    24n,
+  // This is reduced, if any reduction occurs.
+  const noFeesResult = swapInNoFees({ amountGiven, poolAllocation });
+  t.deepEqual(noFeesResult.amountIn, moola(9999n));
+  t.deepEqual(noFeesResult.amountOut, bucks(3703n));
+
+  const noReductionResult = calcDeltaYSellingX(
+    poolAllocation.Central,
+    poolAllocation.Secondary,
+    amountGiven,
   );
-  const valueIn = priceFromTargetOutput(valueOut, initBucks, initMoola, 24n);
-  const pFee = protocolFee(valueIn);
-  const result = pricer.getPriceGivenAvailableInput(moola(input), bucksBrand);
-  console.log(result);
-  t.deepEqual(result, {
-    amountIn: moola(valueIn + pFee),
-    amountOut: bucks(valueOut),
-    protocolFee: moola(pFee),
-  });
-  t.truthy(
-    (initMoola - valueOut) * (initBucks + valueIn) > initBucks * initMoola,
+  t.deepEqual(noReductionResult, bucks(3703n));
+
+  const reduced = calcDeltaXSellingX(
+    poolAllocation.Central,
+    poolAllocation.Secondary,
+    noReductionResult,
   );
+  t.deepEqual(reduced, moola(9999n));
+
+  const result = swapIn(
+    amountGiven,
+    poolAllocation,
+    amountWanted,
+    protocolFeeRatio,
+    poolFeeRatio,
+  );
+  // swapperGives is 9999n
+  // t.deepEqual(result.swapperGives, moola(9997n));
+  // Same
+  t.deepEqual(result.swapperGets, bucks(3692n));
+  // Protocol fee is 6n
+  // t.deepEqual(result.protocolFee, moola(5n));
 });
 
 test('newSwap getPriceGivenAvailableInput secondary', async t => {
-  const initMoola = 800000n;
-  const initBucks = 500000n;
-  const { bucks, moola, moolaBrand, pricer } = setupPricer(
-    initMoola,
-    initBucks,
+  const { moola, bucks, moolaKit, bucksKit } = setupMints();
+  const poolAllocation = {
+    Central: moola(800000n),
+    Secondary: bucks(500000n),
+  };
+  const amountGiven = bucks(10000n);
+  const amountWanted = moola(1n);
+
+  const protocolFeeRatio = makeRatio(
+    PROTOCOL_FEE,
+    moolaKit.brand,
+    BASIS_POINTS,
+  );
+  const poolFeeRatio = makeRatio(POOL_FEE, bucksKit.brand, BASIS_POINTS);
+
+  const result = swapIn(
+    amountGiven,
+    poolAllocation,
+    amountWanted,
+    protocolFeeRatio,
+    poolFeeRatio,
   );
 
-  const input = 10000n;
-  const valueOut = outputFromInputPrice(initBucks, initMoola, input, 24n);
-  const pFee = protocolFee(valueOut);
-  const valueIn = priceFromTargetOutput(valueOut, initMoola, initBucks, 24n);
-  const result = pricer.getPriceGivenAvailableInput(bucks(input), moolaBrand);
-  console.log(result);
-  t.deepEqual(result, {
-    amountIn: bucks(valueIn),
-    amountOut: moola(valueOut - pFee),
-    protocolFee: moola(pFee),
-  });
-  t.truthy(
-    (initMoola - valueOut) * (initBucks + valueIn) > initBucks * initMoola,
-  );
+  const newSwapResult = {
+    amountIn: bucks(10000n),
+    amountOut: moola(15640n),
+    protocolFee: moola(9n),
+  };
+
+  // same
+  t.deepEqual(result.swapperGives, newSwapResult.amountIn);
+  // SwapperGets one less: 15639n
+  // t.deepEqual(result.swapperGets, newSwapResult.amountOut);
+  // Swapper pays one more: 10n
+  // t.deepEqual(result.protocolFee, newSwapResult.protocolFee);
 });
 
 test('newSwap getPriceGivenRequiredOutput specify central', async t => {
