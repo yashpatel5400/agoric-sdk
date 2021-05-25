@@ -36,6 +36,7 @@ const makeConverter = (mirrorConverter = undefined) => {
             yourReject(pass(myReason));
           },
         ).catch(metaReason => {
+          // This can happen if myFulfillment or myReason is not passable.
           // TODO verify that metaReason must be your-side-safe
           yourReject(metaReason);
         });
