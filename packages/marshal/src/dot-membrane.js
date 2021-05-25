@@ -58,7 +58,7 @@ const makeConverter = (mirrorConverter = undefined) => {
           name,
           myMethodToYours(myMethod),
         ]);
-        const iface = getInterfaceOf(mine) || 'unlabeled remotable';
+        const iface = pass(getInterfaceOf(mine)) || 'unlabeled remotable';
         yours = Far(iface, yourMethods);
         break;
       }
