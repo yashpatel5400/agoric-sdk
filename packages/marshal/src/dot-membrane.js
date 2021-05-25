@@ -83,6 +83,7 @@ const makeConverter = (mirrorConverter = undefined) => {
     convertMineToYours,
     myUnserialize,
     pass,
+    wrap: target => passBack(target),
   });
   if (mirrorConverter === undefined) {
     mirrorConverter = makeConverter(converter);
@@ -95,3 +96,10 @@ const makeConverter = (mirrorConverter = undefined) => {
   } = mirrorConverter;
   return converter;
 };
+
+const makeDotMembrane = target => {
+  const converter = makeConverter();
+  return converter.wrap(target);
+};
+harden(makeDotMembrane);
+export { makeDotMembrane };
