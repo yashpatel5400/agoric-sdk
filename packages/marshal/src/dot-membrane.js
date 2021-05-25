@@ -69,9 +69,13 @@ const makeConverter = (mirrorConverter = undefined) => {
     yoursToMine.set(yours, mine);
     return yours;
   };
+  // We need to pass this while convertYoursToMine is still in termporal
+  // dead zone, so we wrap it in convertSlotToVal.
+  const convertSlotToVal = (slot, optIface = undefined) =>
+    convertYoursToMine(slot, optIface);
   const { serialize: mySerialize, unserialize: myUnserialize } = makeMarshal(
     convertMineToYours,
-    convertYoursToMine,
+    convertSlotToVal,
   );
   const pass = mine => {
     const myCapData = mySerialize(mine);
