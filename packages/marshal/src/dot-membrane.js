@@ -9,7 +9,7 @@ import { E } from '@agoric/eventual-send';
 import { Far, makeMarshal } from './marshal';
 import { getInterfaceOf, passStyleOf } from './passStyleOf';
 
-const { entries } = Object;
+const { entries, fromEntries } = Object;
 
 const makeConverter = (mirrorConverter = undefined) => {
   const mineToYours = new WeakMap();
@@ -59,7 +59,7 @@ const makeConverter = (mirrorConverter = undefined) => {
           myMethodToYours(myMethod),
         ]);
         const iface = pass(getInterfaceOf(mine)) || 'unlabeled remotable';
-        yours = Far(iface, yourMethods);
+        yours = Far(iface, fromEntries(yourMethods));
         break;
       }
       default: {
