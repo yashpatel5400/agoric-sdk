@@ -1,0 +1,62 @@
+// @ts-check
+
+import { AmountMath } from '@agoric/ertp';
+
+/**
+ * @param {ZCFSeat} sellSeat
+ * @param {Array<ZCFSeat>} bidSeats
+ */
+const calcWinner = (sellSeat, bidSeats) => {
+  const {
+    give: { Asset: assetAmount },
+    want: { Ask: minBid },
+  } = sellSeat.getProposal();
+
+  const bidBrand = minBid.brand;
+  const emptyBid = AmountMath.makeEmpty(bidBrand);
+
+  let highestBid = emptyBid;
+  let secondHighestBid = emptyBid;
+  let highestBidSeat;
+  let activeBidsCount = 0n;
+
+  bidSeats.forEach(bidSeat => {
+    if (bidSeat.hasExited()) {
+      return;
+    }
+    activeBidsCount += 1n;
+    const bid = bidSeat.getAmountAllocated('Bid', bidBrand);
+    // If the bid is greater than the highestBid, it's the new highestBid
+    if (AmountMath.isGTE(bid, highestBid, bidBrand)) {
+      secondHighestBid = highestBid;
+      highestBid = bid;
+      highestBidSeat = bidSeat;
+    } else if (AmountMath.isGTE(bid, secondHighestBid, bidBrand)) {
+      // If the bid is not greater than the highest bid, but is
+      // greater than or equal to the second highest bid, it is the
+      // new second highest bid.
+      secondHighestBid = bid;
+    }
+  });
+
+  if (activeBidsCount === 0n) {
+    throw sellSeat.fail(
+      new Error(`Could not close auction. No bids were active`),
+    );
+  }
+
+  if (activeBidsCount === 1n) {
+    secondHighestBid = highestBid;
+  }
+
+  return harden({
+    sellSeat,
+    winnerSeat: highestBidSeat,
+    bidSeats,
+    assetPrice: secondHighestBid,
+    assetAmount,
+  });
+};
+
+harden(calcWinner);
+export { calcWinner };
