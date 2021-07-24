@@ -9,24 +9,31 @@ import { Far } from '@agoric/marshal';
 import { makeZoeSeatAdminKit } from './zoeSeat';
 import { makeHandle } from '../makeHandle';
 import { handlePKitWarning } from '../handleWarning';
+import { applyChargeAccount, applyCAToObj } from '../useChargeAccount';
 
 /**
  * @param {Promise<ZoeService>} zoeServicePromise
  * @param {MakeZoeInstanceStorageManager} makeZoeInstanceStorageManager
  * @param {UnwrapInstallation} unwrapInstallation
+ * @param {AssertChargeAccount} assertChargeAccount
  * @returns {StartInstance}
  */
 export const makeStartInstance = (
   zoeServicePromise,
   makeZoeInstanceStorageManager,
   unwrapInstallation,
+  assertChargeAccount,
 ) => {
   /** @type {StartInstance} */
   const startInstance = async (
+    chargeAccount,
     installationP,
     uncleanIssuerKeywordRecord = harden({}),
     customTerms = harden({}),
   ) => {
+    await assertChargeAccount(chargeAccount);
+    // AWAIT ///
+
     /** @type {WeakStore<SeatHandle, ZoeSeatAdmin>} */
     const seatHandleToZoeSeatAdmin = makeNonVOWeakStore('seatHandle');
 
@@ -64,7 +71,10 @@ export const makeStartInstance = (
 
       /** @type {InstanceAdmin} */
       const instanceAdmin = Far('instanceAdmin', {
-        getPublicFacet: () => publicFacetPromiseKit.promise,
+        getPublicFacet: async ca => {
+          const { publicFacet, menu } = await publicFacetPromiseKit.promise;
+          return applyCAToObj(publicFacet, ca, menu);
+        },
         getTerms: zoeInstanceStorageManager.getTerms,
         getIssuers: zoeInstanceStorageManager.getIssuers,
         getBrands: zoeInstanceStorageManager.getBrands,
@@ -81,7 +91,7 @@ export const makeStartInstance = (
           zoeSeatAdmins.forEach(zoeSeatAdmin => zoeSeatAdmin.fail(reason));
         },
         stopAcceptingOffers: () => (acceptingOffers = false),
-        makeUserSeat: (invitationHandle, initialAllocation, proposal) => {
+        makeUserSeat: (invitationHandle, initialAllocation, proposal, ca) => {
           const offerResultPromiseKit = makePromiseKit();
           handlePKitWarning(offerResultPromiseKit);
           const exitObjPromiseKit = makePromiseKit();
@@ -111,8 +121,14 @@ export const makeStartInstance = (
 
           E(handleOfferObjPromiseKit.promise)
             .handleOffer(invitationHandle, zoeSeatAdmin, seatData)
-            .then(({ offerResultP, exitObj }) => {
-              offerResultPromiseKit.resolve(offerResultP);
+            .then(({ offerResultP, exitObj, offerResultMenu }) => {
+              if (offerResultMenu !== undefined) {
+                offerResultPromiseKit.resolve(
+                  applyCAToObj(offerResultP, ca, offerResultMenu),
+                );
+              } else {
+                offerResultPromiseKit.resolve(offerResultP);
+              }
               exitObjPromiseKit.resolve(exitObj);
             });
 
@@ -178,6 +194,11 @@ export const makeStartInstance = (
     // At this point, the contract will start executing. All must be
     // ready
 
+    const zoeServiceWChargeAccount = applyChargeAccount(
+      zoeServicePromise,
+      chargeAccount,
+    );
+
     const {
       creatorFacet = Far('emptyCreatorFacet', {}),
       publicFacet = Far('emptyPublicFacet', {}),
@@ -185,7 +206,7 @@ export const makeStartInstance = (
       handleOfferObj,
     } = await E(zcfRoot).executeContract(
       bundle,
-      zoeServicePromise,
+      zoeServiceWChargeAccount,
       zoeInstanceStorageManager.invitationIssuer,
       zoeInstanceAdminForZcf,
       zoeInstanceStorageManager.getInstanceRecord(),

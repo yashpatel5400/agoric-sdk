@@ -26,9 +26,17 @@ import { makeInstallationStorage } from './installationStorage';
  *
  * @param {CreateZCFVat} createZCFVat - the ability to create a new
  * ZCF Vat
+ * @param {AssertChargeAccount} assertChargeAccount
+ * @param {Function} translateFee
+ * @param {Function} translateExpiration
  * @returns {ZoeStorageManager}
  */
-export const makeZoeStorageManager = createZCFVat => {
+export const makeZoeStorageManager = (
+  createZCFVat,
+  assertChargeAccount,
+  translateFee,
+  translateExpiration,
+) => {
   // issuerStorage contains the issuers that the ZoeService knows
   // about, as well as information about them such as their brand,
   // assetKind, and displayInfo
@@ -57,12 +65,14 @@ export const makeZoeStorageManager = createZCFVat => {
     getInstanceAdmin,
     initInstanceAdmin,
     deleteInstanceAdmin,
-  } = makeInstanceAdminStorage();
+  } = makeInstanceAdminStorage(assertChargeAccount);
 
   // Zoe stores "installations" - identifiable bundles of contract
   // code that can be reused again and again to create new contract
   // instances
-  const { install, unwrapInstallation } = makeInstallationStorage();
+  const { install, unwrapInstallation } = makeInstallationStorage(
+    assertChargeAccount,
+  );
 
   /** @type {MakeZoeInstanceStorageManager} */
   const makeZoeInstanceStorageManager = async (
@@ -172,7 +182,12 @@ export const makeZoeStorageManager = createZCFVat => {
         Object.values(instanceRecordManager.getInstanceRecord().terms.issuers),
       );
 
-    const makeInvitation = setupMakeInvitation(instance, installation);
+    const makeInvitation = setupMakeInvitation(
+      instance,
+      installation,
+      translateFee,
+      translateExpiration,
+    );
 
     const { root, adminNode } = await createZCFVat();
 

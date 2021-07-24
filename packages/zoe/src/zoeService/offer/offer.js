@@ -13,6 +13,7 @@ import '../internal-types';
  * @param {GetInstanceAdmin} getInstanceAdmin
  * @param {DepositPayments} depositPayments
  * @param {GetAssetKindByBrand} getAssetKindByBrand
+ * @param {AssertChargeAccount} assertChargeAccount
  * @returns {Offer}
  */
 export const makeOffer = (
@@ -20,13 +21,17 @@ export const makeOffer = (
   getInstanceAdmin,
   depositPayments,
   getAssetKindByBrand,
+  assertChargeAccount,
 ) => {
   /** @type {Offer} */
   const offer = async (
+    chargeAccount,
     invitation,
     uncleanProposal = harden({}),
     paymentKeywordRecord = harden({}),
   ) => {
+    await assertChargeAccount(chargeAccount);
+    // AWAIT ///
     const { instanceHandle, invitationHandle } = await burnInvitation(
       invitationIssuer,
       invitation,
@@ -47,6 +52,7 @@ export const makeOffer = (
       invitationHandle,
       initialAllocation,
       proposal,
+      chargeAccount,
     );
     // AWAIT ///
     return userSeat;

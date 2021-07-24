@@ -121,3 +121,15 @@
  * @callback CreateZCFVat
  * @returns {Promise<RootAndAdminNode>}
  */
+
+/**
+ * @callback IsChargeAccount
+ * @param {ERef<ChargeAccount>} chargeAccount
+ * @returns {Promise<boolean>}
+ */
+
+/**
+ * @callback AssertChargeAccount
+ * @param {ERef<ChargeAccount>} chargeAccount
+ * @returns {void}
+ */

@@ -4,7 +4,14 @@ import { assert, details as X } from '@agoric/assert';
 import { Far } from '@agoric/marshal';
 import { E } from '@agoric/eventual-send';
 
-export const makeInstallationStorage = () => {
+/**
+ * @param {AssertChargeAccount} assertChargeAccount
+ * @returns {{
+ *   install: Install,
+ *   unwrapInstallation: UnwrapInstallation
+ * }}
+ */
+export const makeInstallationStorage = assertChargeAccount => {
   /** @type {WeakSet<Installation>} */
   const installations = new WeakSet();
 
@@ -13,7 +20,8 @@ export const makeInstallationStorage = () => {
    * evaluated each time it is used to make a new instance of a contract.
    */
   /** @type {Install} */
-  const install = bundle => {
+  const install = async (chargeAccount, bundle) => {
+    await assertChargeAccount(chargeAccount);
     assert.typeof(bundle, 'object', X`a bundle must be provided`);
     /** @type {Installation} */
     const installation = Far('Installation', {

@@ -22,6 +22,7 @@ import '../../exported';
 import '../internal-types';
 
 import '@agoric/swingset-vat/src/types';
+import { LOW_FEE } from '../constants';
 
 /** @type {MakeZCFZygote} */
 export const makeZCFZygote = (
@@ -211,6 +212,8 @@ export const makeZCFZygote = (
       offerHandler = () => {},
       description,
       customProperties = harden({}),
+      fee = undefined,
+      expiration = undefined,
     ) => {
       assert.typeof(
         description,
@@ -224,6 +227,8 @@ export const makeZCFZygote = (
         invitationHandle,
         description,
         customProperties,
+        fee,
+        expiration,
       );
       return invitationP;
     },

@@ -17,12 +17,17 @@ import '../internal-types';
 
 import { Far } from '@agoric/marshal';
 import { makePromiseKit } from '@agoric/promise-kit';
+import { AssetKind, makeIssuerKit, AmountMath } from '@agoric/ertp';
 
 import { makeZoeStorageManager } from './zoeStorageManager';
 import { makeStartInstance } from './startInstance';
 import { makeOffer } from './offer/offer';
 import { makeInvitationQueryFns } from './invitationQueries';
 import { setupCreateZCFVat } from './createZCFVat';
+import { setupMakeChargeAccount } from './chargeAccount';
+import { natSafeMath } from '../contractSupport';
+
+const { multiply } = natSafeMath;
 
 /**
  * Create an instance of Zoe.
@@ -30,9 +35,18 @@ import { setupCreateZCFVat } from './createZCFVat';
  * @param {VatAdminSvc} vatAdminSvc - The vatAdmin Service, which carries the power
  * to create a new vat.
  * @param {string} [zcfBundleName] - The name of the contract facet bundle.
- * @returns {ZoeService} The created Zoe service.
+ * @param {Object} syncTimer
+ * @param {NatValue} feePerComputronValue
+ * @param {string} feeIssuerName
+ * @returns {{ zoeService: ZoeService, feeIssuerKit: IssuerKit}}
  */
-const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
+const makeZoe = (
+  vatAdminSvc,
+  zcfBundleName = undefined,
+  syncTimer,
+  feePerComputronValue,
+  feeIssuerName = 'RUN',
+) => {
   // We must pass the ZoeService to `makeStartInstance` before it is
   // defined. See below where the promise is resolved.
   /** @type {PromiseRecord<ZoeService>} */
@@ -42,6 +56,19 @@ const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
   // be closely held. vatAdminSvc is even more powerful - any vat can
   // be created. We severely restrict access to vatAdminSvc for this reason.
   const createZCFVat = setupCreateZCFVat(vatAdminSvc, zcfBundleName);
+
+  const feeIssuerKit = makeIssuerKit(feeIssuerName, AssetKind.NAT, {
+    decimalPlaces: 6,
+  });
+
+  const feePerComputron = AmountMath.make(
+    feeIssuerKit.brand,
+    feePerComputronValue,
+  );
+
+  const { makeChargeAccount, assertChargeAccount } = setupMakeChargeAccount(
+    feeIssuerKit.issuer,
+  );
 
   // The ZoeStorageManager composes and consolidates capabilities
   // needed by Zoe according to POLA.
@@ -57,13 +84,14 @@ const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
     getTerms,
     getInstanceAdmin,
     invitationIssuer,
-  } = makeZoeStorageManager(createZCFVat);
+  } = makeZoeStorageManager(createZCFVat, assertChargeAccount, syncTimer);
 
   // Pass the capabilities necessary to create zoe.startInstance
   const startInstance = makeStartInstance(
     zoeServicePromiseKit.promise,
     makeZoeInstanceStorageManager,
     unwrapInstallation,
+    assertChargeAccount,
   );
 
   // Pass the capabilities necessary to create zoe.offer
@@ -72,6 +100,7 @@ const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
     getInstanceAdmin,
     depositPayments,
     getAssetKindByBrand,
+    assertChargeAccount,
   );
 
   // Make the methods that allow users to easily and credibly get
@@ -84,20 +113,30 @@ const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
 
   /** @type {ZoeService} */
   const zoeService = Far('zoeService', {
+    makeChargeAccount,
+
+    // A chargeAccount is required
     install,
     startInstance,
     offer,
+    getPublicFacet,
 
     // The functions below are getters only and have no impact on
     // state within Zoe
     getInvitationIssuer: () => invitationIssuer,
-    getPublicFacet,
+    getFeeIssuer: () => feeIssuerKit.issuer,
     getBrands,
     getIssuers,
     getTerms,
     getInstance,
     getInstallation,
     getInvitationDetails,
+    getMenu: () =>
+      harden({
+        getPublicFacet: feePerComputron,
+        install: multiply(feePerComputron, 10),
+        startInstance: multiply(feePerComputron, 100),
+      }),
   });
 
   // startInstance must pass the ZoeService to the newly created ZCF
@@ -105,7 +144,10 @@ const makeZoe = (vatAdminSvc, zcfBundleName = undefined) => {
   // defined. So, we pass a promise and then resolve the promise here.
   zoeServicePromiseKit.resolve(zoeService);
 
-  return zoeService;
+  return {
+    zoeService,
+    feeIssuerKit,
+  };
 };
 
 export { makeZoe };

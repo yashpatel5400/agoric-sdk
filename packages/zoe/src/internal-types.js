@@ -61,9 +61,18 @@
  */
 
 /**
+ * @typedef {Record<string, Amount>} Menu
+ */
+
+/**
+ * @typedef {Record<string, string>} ZCFMenu
+ */
+
+/**
  * @typedef {Object} HandleOfferResult
  * @property {Promise<any>} offerResultP
  * @property {Object} exitObj
+ * @property {ZCFMenu} offerResultMenu
  */
 
 /**
@@ -75,7 +84,7 @@
  * @property {() => void} assertAcceptingOffers
  * @property {(invitationHandle: InvitationHandle,
  *     initialAllocation: Allocation,
- *     proposal: ProposalRecord) => UserSeat } makeUserSeat
+ *     proposal: ProposalRecord, chargeAccount: ERef<ChargeAccount>) => UserSeat } makeUserSeat
  * @property {MakeNoEscrowSeat} makeNoEscrowSeat
  * @property {() => Instance} getInstance
  * @property {() => Object} getPublicFacet
@@ -96,14 +105,21 @@
  * @property {(invitationHandle: InvitationHandle,
  *             zoeSeatAdmin: ZoeSeatAdmin,
  *             seatData: SeatData,
- *            ) => HandleOfferResult} handleOffer
+ *            ) => Promise<HandleOfferResult>} handleOffer
  */
 
 /**
  * @callback ZoeInstanceAdminMakeInvitation
  * @param {InvitationHandle} invitationHandle
  * @param {string} description
- * @param {Record<string, any>=} customProperties
+ * @param {Object=} customProperties
+ * @param {FeeChoice=} fee - If present, Zoe will transform this into
+ * an amount of RUN in the invitation details. This is the exact
+ * amount Zoe will charge when this invitation is used to make an
+ * offer.
+ * @param {ExpirationChoice=} expiration - If present, Zoe will
+ * transform this into a timestamp in the invitation details. After
+ * that timestamp, the invitation is no longer accepted by Zoe.
  * @returns {Payment}
  */
 
@@ -173,7 +189,7 @@
  *
  * @callback ExecuteContract
  * @param {SourceBundle} bundle
- * @param {Promise<ZoeService>} zoeServicePromise
+ * @param {ZoeServiceWChargeAccount} zoeServicePromise
  * @param {Issuer} invitationIssuer
  * @param {ZoeInstanceAdmin} zoeInstanceAdmin
  * @param {InstanceRecord} instanceRecord

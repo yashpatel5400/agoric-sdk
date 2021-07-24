@@ -8,6 +8,7 @@ import { makeIssuerKit, AmountMath, AssetKind } from '@agoric/ertp';
 
 import { makeZoe } from '@agoric/zoe';
 import fakeVatAdmin from '@agoric/zoe/tools/fakeVatAdmin';
+import { makeAndUseChargeAccount } from '@agoric/zoe/src/useChargeAccount';
 
 import { assert } from '@agoric/assert';
 import { E } from '@agoric/eventual-send';
@@ -45,7 +46,8 @@ async function setupTest() {
   const moolaBundle = makeIssuerKit('moola');
   const simoleanBundle = makeIssuerKit('simolean');
   const rpgBundle = makeIssuerKit('rpg', AssetKind.SET);
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = makeAndUseChargeAccount(zoeService);
   const board = makeBoard();
 
   // Create AutomaticRefund instance
@@ -1188,7 +1190,8 @@ test('addOffer offer.invitation', async t => {
 });
 
 test('addOffer makeContinuingInvitation', async t => {
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = makeAndUseChargeAccount(zoeService);
   const board = makeBoard();
 
   // Create ContinuingInvitationExample instance
@@ -1266,7 +1269,8 @@ test('addOffer makeContinuingInvitation', async t => {
 });
 
 test('getZoe, getBoard', async t => {
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = makeAndUseChargeAccount(zoeService);
   const board = makeBoard();
 
   const pursesStateChangeHandler = _data => {};
