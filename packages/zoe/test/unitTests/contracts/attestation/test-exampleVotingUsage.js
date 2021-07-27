@@ -13,13 +13,15 @@ import { makeZoe } from '../../../../src/zoeService/zoe';
 import fakeVatAdmin from '../../../../tools/fakeVatAdmin';
 import { makeAttestationElem } from '../../../../src/contracts/attestation/expiring/expiringHelpers';
 import { makeHandle } from '../../../../src/makeHandle';
+import { useChargeAccount } from '../../../../src/useChargeAccount';
 
 const exampleVotingUsageRoot = `${__dirname}/exampleVotingUsage`;
 
 test('exampleVotingUsage', async t => {
   const bundle = await bundleSource(exampleVotingUsageRoot);
 
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = useChargeAccount(zoeService);
   const installation = await E(zoe).install(bundle);
 
   const bldIssuerKit = makeIssuerKit('BLD', AssetKind.NAT, {

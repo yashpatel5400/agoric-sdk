@@ -9,6 +9,8 @@ import { makeBoard } from '@agoric/vats/src/lib-board';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { makeNameHubKit } from '@agoric/vats/src/nameHub';
 import { Far } from '@agoric/marshal';
+import { useChargeAccount } from '@agoric/zoe/src/useChargeAccount';
+
 import { makeWallet } from '../src/lib-wallet';
 
 import '../src/types';
@@ -24,7 +26,8 @@ function makeFakeMyAddressNameAdmin() {
 }
 
 const setup = async () => {
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = useChargeAccount(zoeService);
   const board = makeBoard();
 
   const pursesStateChangeHandler = _data => {};

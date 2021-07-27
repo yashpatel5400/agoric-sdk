@@ -10,6 +10,7 @@ import bundleSource from '@agoric/bundle-source';
 import { makeZoe } from '../../../src/zoeService/zoe';
 import { setup } from '../setupBasicMints';
 import { makeFakeVatAdmin } from '../../../tools/fakeVatAdmin';
+import { useChargeAccount } from '../../../src/useChargeAccount';
 
 import '../../../exported';
 
@@ -25,12 +26,15 @@ test(`zoe - wrongly throw zcfSeat.exit()`, async t => {
     testJig = jig;
   };
   const { admin: fakeVatAdminSvc, vatAdminState } = makeFakeVatAdmin(setJig);
-  const zoe = makeZoe(fakeVatAdminSvc);
+  const { /** @type {ERef<ZoeService>} */ zoeService } = makeZoe(
+    fakeVatAdminSvc,
+  );
+  const zoe = useChargeAccount(zoeService);
 
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   // Alice creates an instance
   const issuerKeywordRecord = harden({

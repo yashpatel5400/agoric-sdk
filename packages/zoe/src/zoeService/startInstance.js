@@ -9,24 +9,31 @@ import { Far } from '@agoric/marshal';
 import { makeZoeSeatAdminKit } from './zoeSeat';
 import { makeHandle } from '../makeHandle';
 import { handlePKitWarning } from '../handleWarning';
+import { applyChargeAccount } from '../useChargeAccount';
 
 /**
  * @param {Promise<ZoeService>} zoeServicePromise
  * @param {MakeZoeInstanceStorageManager} makeZoeInstanceStorageManager
  * @param {UnwrapInstallation} unwrapInstallation
+ * @param {CheckChargeAccount} checkChargeAccount
  * @returns {StartInstance}
  */
 export const makeStartInstance = (
   zoeServicePromise,
   makeZoeInstanceStorageManager,
   unwrapInstallation,
+  checkChargeAccount,
 ) => {
   /** @type {StartInstance} */
   const startInstance = async (
+    chargeAccountP,
     installationP,
     uncleanIssuerKeywordRecord = harden({}),
     customTerms = harden({}),
   ) => {
+    const chargeAccount = await checkChargeAccount(chargeAccountP);
+    // AWAIT ///
+
     /** @type {WeakStore<SeatHandle, ZoeSeatAdmin>} */
     const seatHandleToZoeSeatAdmin = makeNonVOWeakStore('seatHandle');
 
@@ -178,6 +185,11 @@ export const makeStartInstance = (
     // At this point, the contract will start executing. All must be
     // ready
 
+    const zoeServiceWChargeAccount = applyChargeAccount(
+      zoeServicePromise,
+      chargeAccount,
+    );
+
     const {
       creatorFacet = Far('emptyCreatorFacet', {}),
       publicFacet = Far('emptyPublicFacet', {}),
@@ -185,7 +197,7 @@ export const makeStartInstance = (
       handleOfferObj,
     } = await E(zcfRoot).executeContract(
       bundle,
-      zoeServicePromise,
+      zoeServiceWChargeAccount,
       zoeInstanceStorageManager.invitationIssuer,
       zoeInstanceAdminForZcf,
       zoeInstanceStorageManager.getInstanceRecord(),

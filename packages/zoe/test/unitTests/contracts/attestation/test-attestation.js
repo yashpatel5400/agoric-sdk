@@ -12,13 +12,15 @@ import { E } from '@agoric/eventual-send';
 
 import { makeZoe } from '../../../../src/zoeService/zoe';
 import fakeVatAdmin from '../../../../tools/fakeVatAdmin';
+import { useChargeAccount } from '../../../../src/useChargeAccount';
 
 const attestationRoot = `${__dirname}/../../../../src/contracts/attestation/attestation`;
 
 test('attestation contract basic tests', async t => {
   const bundle = await bundleSource(attestationRoot);
 
-  const zoe = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const zoe = useChargeAccount(zoeService);
   const installation = await E(zoe).install(bundle);
 
   const bldIssuerKit = makeIssuerKit('BLD', AssetKind.NAT, {
