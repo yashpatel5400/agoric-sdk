@@ -4,7 +4,8 @@ import { makeWeakStore as makeNonVOWeakStore } from '@agoric/store';
 import { E } from '@agoric/eventual-send';
 
 /**
- * @param {CheckChargeAccount} checkChargeAccount
+ * @param {ChargeFee} chargeFee
+ * @param {Amount} fee
  * @returns {{
  *   getPublicFacet: GetPublicFacet,
  *   getBrands: GetBrands,
@@ -16,13 +17,13 @@ import { E } from '@agoric/eventual-send';
  *   deleteInstanceAdmin: (instance: Instance) => void,
  * }}
  */
-export const makeInstanceAdminStorage = checkChargeAccount => {
+export const makeInstanceAdminStorage = (chargeFee, fee) => {
   /** @type {WeakStore<Instance,InstanceAdmin>} */
   const instanceToInstanceAdmin = makeNonVOWeakStore('instance');
 
   /** @type {GetPublicFacet} */
   const getPublicFacet = async (chargeAccountP, instanceP) => {
-    const chargeAccount = await checkChargeAccount(chargeAccountP);
+    await chargeFee(chargeAccountP, fee);
 
     return E.when(instanceP, instance =>
       instanceToInstanceAdmin.get(instance).getPublicFacet(),

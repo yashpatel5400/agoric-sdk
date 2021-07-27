@@ -1,7 +1,5 @@
 // @ts-check
 
-import { assert, details as X } from '@agoric/assert';
-
 import { cleanProposal } from '../../cleanProposal';
 import { burnInvitation } from './burnInvitation';
 
@@ -15,7 +13,8 @@ import '../internal-types';
  * @param {GetInstanceAdmin} getInstanceAdmin
  * @param {DepositPayments} depositPayments
  * @param {GetAssetKindByBrand} getAssetKindByBrand
- * @param {CheckChargeAccount} checkChargeAccount
+ * @param {ChargeFee} chargeFee
+ * @param {Amount} fee
  * @returns {Offer}
  */
 export const makeOffer = (
@@ -23,20 +22,17 @@ export const makeOffer = (
   getInstanceAdmin,
   depositPayments,
   getAssetKindByBrand,
-  checkChargeAccount,
+  chargeFee,
+  fee,
 ) => {
   /** @type {Offer} */
   const offer = async (
-    chargeAccount,
+    chargeAccountP,
     invitation,
     uncleanProposal = harden({}),
     paymentKeywordRecord = harden({}),
   ) => {
-    const chargeAccountProvided = await checkChargeAccount(chargeAccount);
-    assert(
-      chargeAccountProvided,
-      X`A chargeAccount must be provided, not ${chargeAccount}`,
-    );
+    await chargeFee(chargeAccountP, fee);
     const { instanceHandle, invitationHandle } = await burnInvitation(
       invitationIssuer,
       invitation,

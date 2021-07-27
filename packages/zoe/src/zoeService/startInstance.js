@@ -15,14 +15,16 @@ import { applyChargeAccount } from '../useChargeAccount';
  * @param {Promise<ZoeService>} zoeServicePromise
  * @param {MakeZoeInstanceStorageManager} makeZoeInstanceStorageManager
  * @param {UnwrapInstallation} unwrapInstallation
- * @param {CheckChargeAccount} checkChargeAccount
+ * @param {ChargeFee} chargeFee
+ * @param {Amount} fee
  * @returns {StartInstance}
  */
 export const makeStartInstance = (
   zoeServicePromise,
   makeZoeInstanceStorageManager,
   unwrapInstallation,
-  checkChargeAccount,
+  chargeFee,
+  fee,
 ) => {
   /** @type {StartInstance} */
   const startInstance = async (
@@ -31,7 +33,7 @@ export const makeStartInstance = (
     uncleanIssuerKeywordRecord = harden({}),
     customTerms = harden({}),
   ) => {
-    const chargeAccount = await checkChargeAccount(chargeAccountP);
+    const chargeAccount = await chargeFee(chargeAccountP, fee);
     // AWAIT ///
 
     /** @type {WeakStore<SeatHandle, ZoeSeatAdmin>} */

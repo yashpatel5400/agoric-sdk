@@ -8,16 +8,18 @@ const { details: X } = assert;
 /**
  *
  * @param {Issuer} feeIssuer
+ * @param {Purse} feePurse
  * @returns {{
  *   makeChargeAccount: MakeChargeAccount,
  *   checkChargeAccount: CheckChargeAccount,
+ *   chargeFee: ChargeFee,
  * }}
  */
-const setupMakeChargeAccount = feeIssuer => {
+const setupMakeChargeAccount = (feeIssuer, feePurse) => {
   const chargeAccounts = new WeakSet();
 
   /** @type {MakeChargeAccount} */
-  const makeChargeAccount = () => {
+  const makeChargeAccount = async () => {
     const purse = feeIssuer.makeEmptyPurse();
     /** @type {ChargeAccount} */
     const chargeAccount = Far('chargeAccount', {
@@ -40,12 +42,25 @@ const setupMakeChargeAccount = feeIssuer => {
     });
   };
 
+  /** @type {ChargeFee} */
+  const chargeFee = async (chargeAccountP, fee) => {
+    return E.when(chargeAccountP, async ca => {
+      assert(
+        chargeAccounts.has(ca),
+        X`A chargeAccount must be provided, not ${ca}`,
+      );
+      const payment = ca.withdraw(fee);
+      feePurse.deposit(payment);
+      return ca;
+    });
+  };
+
   return {
     makeChargeAccount,
     checkChargeAccount,
+    chargeFee,
   };
-
 };
 
 harden(setupMakeChargeAccount);
-export { setupMakeChargeAccount};
+export { setupMakeChargeAccount };

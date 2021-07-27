@@ -276,7 +276,7 @@
  *
  * Create a RUN purse within Zoe that can be used to pay for execution.
  *
- * @returns {ChargeAccount}
+ * @returns {Promise<ChargeAccount>}
  */
 
 /**

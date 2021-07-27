@@ -26,10 +26,17 @@ import { makeInstallationStorage } from './installationStorage';
  *
  * @param {CreateZCFVat} createZCFVat - the ability to create a new
  * ZCF Vat
- * @param {CheckChargeAccount} checkChargeAccount
+ * @param {ChargeFee} chargeFee
+ * @param {Amount} makePublicFacetFee
+ * @param {Amount} installFee
  * @returns {ZoeStorageManager}
  */
-export const makeZoeStorageManager = (createZCFVat, checkChargeAccount) => {
+export const makeZoeStorageManager = (
+  createZCFVat,
+  chargeFee,
+  makePublicFacetFee,
+  installFee,
+) => {
   // issuerStorage contains the issuers that the ZoeService knows
   // about, as well as information about them such as their brand,
   // assetKind, and displayInfo
@@ -58,13 +65,14 @@ export const makeZoeStorageManager = (createZCFVat, checkChargeAccount) => {
     getInstanceAdmin,
     initInstanceAdmin,
     deleteInstanceAdmin,
-  } = makeInstanceAdminStorage(checkChargeAccount);
+  } = makeInstanceAdminStorage(chargeFee, makePublicFacetFee);
 
   // Zoe stores "installations" - identifiable bundles of contract
   // code that can be reused again and again to create new contract
   // instances
   const { install, unwrapInstallation } = makeInstallationStorage(
-    checkChargeAccount,
+    chargeFee,
+    installFee,
   );
 
   /** @type {MakeZoeInstanceStorageManager} */

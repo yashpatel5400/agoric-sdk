@@ -11,22 +11,26 @@ const setup = () => {
   const runIssuerKit = makeIssuerKit('RUN', AssetKind.NAT, {
     decimalPlaces: 6,
   });
-  const { makeChargeAccount, checkChargeAccount } = setupMakeChargeAccount(
-    runIssuerKit.issuer,
-  );
-  return { makeChargeAccount, checkChargeAccount, runIssuerKit };
+
+  const purse = runIssuerKit.issuer.makeEmptyPurse();
+  const {
+    makeChargeAccount,
+    checkChargeAccount,
+    chargeFee,
+  } = setupMakeChargeAccount(runIssuerKit.issuer, purse);
+  return { makeChargeAccount, checkChargeAccount, chargeFee, runIssuerKit };
 };
 
 test('chargeAccount starts empty', async t => {
   const { makeChargeAccount } = setup();
-  const chargeAccount = makeChargeAccount();
+  const chargeAccount = await makeChargeAccount();
 
   t.true(AmountMath.isEmpty(chargeAccount.getCurrentAmount()));
 });
 
 test('depositing into and withdrawing from chargeAccount', async t => {
   const { makeChargeAccount, runIssuerKit } = setup();
-  const chargeAccount = makeChargeAccount();
+  const chargeAccount = await makeChargeAccount();
 
   const run1000 = AmountMath.make(runIssuerKit.brand, 1000n);
   const payment = runIssuerKit.mint.mintPayment(run1000);
@@ -41,10 +45,34 @@ test('depositing into and withdrawing from chargeAccount', async t => {
 
 test('checkChargeAccount', async t => {
   const { makeChargeAccount, checkChargeAccount } = setup();
-  const chargeAccount = makeChargeAccount();
+  const chargeAccount = await makeChargeAccount();
 
   await t.notThrowsAsync(() => checkChargeAccount(chargeAccount));
   await t.notThrowsAsync(() =>
     checkChargeAccount(Promise.resolve(chargeAccount)),
+  );
+});
+
+test('chargeFee', async t => {
+  const { makeChargeAccount, chargeFee, runIssuerKit } = setup();
+  const chargeAccount = await makeChargeAccount();
+
+  const run1000 = AmountMath.make(runIssuerKit.brand, 1000n);
+  const payment = runIssuerKit.mint.mintPayment(run1000);
+  chargeAccount.deposit(payment);
+
+  const run10 = AmountMath.make(runIssuerKit.brand, 10n);
+
+  await chargeFee(chargeAccount, run10);
+
+  await chargeFee(Promise.resolve(chargeAccount), run10);
+
+  const currentAmount = chargeAccount.getCurrentAmount();
+
+  t.true(
+    AmountMath.isEqual(
+      currentAmount,
+      AmountMath.make(runIssuerKit.brand, 980n),
+    ),
   );
 });

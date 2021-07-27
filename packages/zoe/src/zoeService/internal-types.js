@@ -133,3 +133,10 @@
  * @param {ERef<ChargeAccount>} chargeAccount
  * @returns {Promise<ChargeAccount>}
  */
+
+/**
+ * @callback ChargeFee
+ * @param {ERef<ChargeAccount>} chargeAccountP
+ * @param {Amount} fee
+ * @returns {Promise<ChargeAccount>}
+ */
