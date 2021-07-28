@@ -38,7 +38,12 @@ import { setupMakeChargeAccount } from './chargeAccount';
  */
 const makeZoe = (
   vatAdminSvc,
-  fees = { install: 0n, startInstance: 0n, offer: 0n, makePublicFacet: 0n },
+  fees = {
+    install: 0n,
+    startInstance: 0n,
+    offer: 0n,
+    makePublicFacet: 0n,
+  },
   zcfBundleName = undefined,
 ) => {
   // We must pass the ZoeService to `makeStartInstance` before it is

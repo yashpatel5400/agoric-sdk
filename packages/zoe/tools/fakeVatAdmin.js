@@ -7,6 +7,7 @@ import { Far } from '@agoric/marshal';
 import { assert, details as X } from '@agoric/assert';
 import { evalContractBundle } from '../src/contractFacet/evalContractCode';
 import { handlePKitWarning } from '../src/handleWarning';
+import { makeMemoryExternalStore } from '../../store/src';
 
 function makeFakeVatAdmin(testContextSetter = undefined, makeRemote = x => x) {
   // FakeVatPowers isn't intended to support testing of vat termination, it is
@@ -27,12 +28,29 @@ function makeFakeVatAdmin(testContextSetter = undefined, makeRemote = x => x) {
     },
   };
 
+  const makeMeter = (remaining, threshold) => {
+    // * @property {(delta: bigint) => void} addRemaining
+    // * @property {(newThreshold: bigint) => void} setThreshold
+    // * @property {() => {{ remaining: bigint, threshold: bigint }}} get
+    // * @property {() => Notifier<bigint>} getNotifier
+    return harden({
+      addRemaining: _delta => {},
+      setThreshold: _newThreshold => {},
+      get: () => {
+        return harden({ remaining, threshold });
+      },
+      getNotifier: () => {},
+    });
+  };
+
   // This is explicitly intended to be mutable so that
   // test-only state can be provided from contracts
   // to their tests.
   const admin = Far('vatAdmin', {
-    createMeter: () => {},
-    createUnlimitedMeter: () => {},
+    createMeter: (remaining, threshold) => {
+      makeMeter(remaining, threshold);
+    },
+    createUnlimitedMeter: () => makeMeter(),
     createVat: bundle => {
       return harden({
         root: makeRemote(

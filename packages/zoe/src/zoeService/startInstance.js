@@ -44,11 +44,18 @@ export const makeStartInstance = (
 
     const instance = makeHandle('Instance');
 
+    // Use one-to-one computrons to RUN for now
+    const remaining = /** @type {bigint} */ (fee.value);
+    console.log('remaining', remaining);
+    const threshold = remaining / 10n;
+
     const zoeInstanceStorageManager = await makeZoeInstanceStorageManager(
       installation,
       customTerms,
       uncleanIssuerKeywordRecord,
       instance,
+      remaining,
+      threshold,
     );
     // AWAIT ///
 

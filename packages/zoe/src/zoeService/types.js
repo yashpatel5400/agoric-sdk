@@ -236,9 +236,19 @@
  */
 
 /**
+ * @typedef {Object} Meter
+ * @property {(delta: bigint) => void} addRemaining
+ * @property {(newThreshold: bigint) => void} setThreshold
+ * @property {() => {{ remaining: bigint, threshold: bigint }}} get
+ * @property {() => Notifier<bigint>} getNotifier
+ */
+
+/**
  * @typedef {Object} VatAdminSvc
  * @property {(bundle: SourceBundle) => RootAndAdminNode} createVat
- * @property {(BundleName: string) => RootAndAdminNode} createVatByName
+ * @property {(bundleName: string) => RootAndAdminNode} createVatByName
+ * @property {(remaining: bigint, threshold: bigint) => Meter} createMeter
+ * @property {() => Meter} createUnlimitedMeter
  */
 
 /**

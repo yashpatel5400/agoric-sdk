@@ -81,6 +81,8 @@ export const makeZoeStorageManager = (
     customTerms,
     uncleanIssuerKeywordRecord,
     instance,
+    remaining,
+    threshold,
   ) => {
     // Clean the issuerKeywordRecord we receive in `startInstance`
     // from the user, and save the issuers in Zoe if they are not
@@ -185,7 +187,7 @@ export const makeZoeStorageManager = (
 
     const makeInvitation = setupMakeInvitation(instance, installation);
 
-    const { root, adminNode } = await createZCFVat();
+    const { root, adminNode } = await createZCFVat(remaining, threshold);
 
     return harden({
       getTerms: instanceRecordManager.getTerms,

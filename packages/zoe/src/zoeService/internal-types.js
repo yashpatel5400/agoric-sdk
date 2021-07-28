@@ -96,6 +96,10 @@
  * @param {Object} customTerms
  * @param {IssuerKeywordRecord} uncleanIssuerKeywordRecord
  * @param {Instance} instance
+ * @param {bigint} remaining - the amount of computrons to initiate
+ * the meter with
+ * @param {bigint} threshold - the amount of computrons below which to
+ * notify
  * @returns {ZoeInstanceStorageManager}
  */
 
@@ -119,6 +123,8 @@
  * ZCF bundle
  *
  * @callback CreateZCFVat
+ * @param {bigint} remaining
+ * @param {bigint} threshold
  * @returns {Promise<RootAndAdminNode>}
  */
 
