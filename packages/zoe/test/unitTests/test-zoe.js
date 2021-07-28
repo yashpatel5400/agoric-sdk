@@ -357,13 +357,88 @@ test(`E(zoe).makeChargeAccount`, async t => {
 
   const run1000 = AmountMath.make(runBrand, 1000n);
   const payment = feeIssuerKit.mint.mintPayment(run1000);
-  E(chargeAccount).deposit(payment);
+  await E(chargeAccount).deposit(payment);
 
   t.true(
     AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run1000),
   );
 
-  E(chargeAccount).withdraw(run1000);
+  await E(chargeAccount).withdraw(run1000);
 
   t.true(AmountMath.isEmpty(await E(chargeAccount).getCurrentAmount()));
+});
+
+test(`Zoe can charge fees`, async t => {
+  const fees = harden({
+    install: 1n,
+    startInstance: 2n,
+    offer: 3n,
+    makePublicFacet: 4n,
+  });
+  const startingBalance = 1003n;
+  const { zoe, feeIssuerKit, chargeAccount } = await setupZCFTest(
+    undefined,
+    undefined,
+    fees,
+    startingBalance,
+  );
+
+  const runBrand = feeIssuerKit.brand;
+
+  const run1000 = AmountMath.make(runBrand, 1000n);
+  const run999 = AmountMath.make(runBrand, 999n);
+  const run997 = AmountMath.make(runBrand, 997n);
+  const run994 = AmountMath.make(runBrand, 994n);
+  const run990 = AmountMath.make(runBrand, 990n);
+
+  t.true(
+    AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run1000),
+  );
+
+  const contractPath = `${__dirname}/../../src/contracts/atomicSwap`;
+  const bundle = await bundleSource(contractPath);
+  // - 1n
+  const installation = await E(zoe).install(bundle);
+
+  t.true(AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run999));
+
+  const issuerKeywordRecord = harden({
+    Asset: feeIssuerKit.issuer,
+    Price: feeIssuerKit.issuer,
+  });
+
+  // - 2n
+  const { creatorInvitation, instance } = await E(zoe).startInstance(
+    installation,
+    issuerKeywordRecord,
+  );
+
+  t.true(AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run997));
+
+  const proposal = harden({
+    give: {
+      Asset: run1000,
+    },
+    want: {
+      Price: run1000,
+    },
+  });
+
+  const payments = harden({
+    Asset: feeIssuerKit.mint.mintPayment(run1000),
+  });
+
+  // - 3n
+  await E(zoe).offer(
+    /** @type {Invitation} */ (creatorInvitation),
+    proposal,
+    payments,
+  );
+
+  t.true(AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run994));
+
+  // - 4n
+  await E(zoe).getPublicFacet(instance);
+
+  t.true(AmountMath.isEqual(await E(chargeAccount).getCurrentAmount(), run990));
 });

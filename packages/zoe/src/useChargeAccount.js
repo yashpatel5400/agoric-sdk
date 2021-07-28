@@ -36,6 +36,8 @@ const applyChargeAccount = (zoe, chargeAccount) => {
 /**
  * Make a new charge account and then partially apply it to Zoe methods.
  *
+ * Used primarily for tests.
+ *
  * @param {ZoeService} zoe
  * @returns {ZoeServiceWChargeAccount}
  */
