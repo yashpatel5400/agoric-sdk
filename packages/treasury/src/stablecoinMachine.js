@@ -26,13 +26,16 @@ import {
   offerTo,
   getAmountOut,
   getAmountIn,
+  withdrawFromSeat,
+  depositToSeat,
 } from '@agoric/zoe/src/contractSupport';
 
 import {
   multiplyBy,
   makeRatioFromAmounts,
 } from '@agoric/zoe/src/contractSupport/ratio';
-import { AmountMath } from '@agoric/ertp';
+import { AmountMath, AssetKind } from '@agoric/ertp';
+import { makePromiseKit } from '@agoric/promise-kit';
 import { makeTracer } from './makeTracer';
 import { makeVaultManager } from './vaultManager';
 import { makeLiquidationStrategy } from './liquidateMinimum';
@@ -50,7 +53,69 @@ export async function start(zcf) {
     timerService,
     liquidationInstall,
     bootstrapPaymentValue = 0n,
+    initialAmount = 100_000_000_000n,
+    issuers: { RUN: runIssuer },
+    brands: { RUN: runBrand },
   } = zcf.getTerms();
+
+  const makePseudoRunMint = async () => {
+    const runMintPromiseKit = makePromiseKit();
+
+    const { zcfSeat: RUNMintSeat } = zcf.makeEmptySeatKit();
+
+    const mintRUNToSeat = (recipientSeat, amounts) => {
+      const payments = Object.fromEntries(
+        Object.entries(amounts).map(([keyword, amount]) => {
+          return [keyword, E(runMintPromiseKit.promise).mintPayment(amount)];
+        }),
+      );
+      return depositToSeat(zcf, recipientSeat, amounts, payments);
+    };
+
+    await mintRUNToSeat(RUNMintSeat, { RUN: initialAmount });
+
+    const mintGains = (toAmountKeywordRecord, toSeat) => {
+      Object.entries(toAmountKeywordRecord).forEach(([keyword, amount]) => {
+        RUNMintSeat.decrementBy({ RUN: amount });
+        toSeat.incrementBy({ [keyword]: amount });
+      });
+
+      zcf.reallocate(RUNMintSeat, toSeat);
+      return toSeat;
+    };
+
+    const burnRUNPayment = paymentP => E(runIssuer).burn(paymentP);
+    const burnLosses = (amounts, originSeat) => {
+      // returns a promise for a payout (promises for payments)
+      const payoutsPromise = withdrawFromSeat(zcf, originSeat, amounts);
+      // Get an object that is promises for the payments
+      const payoutPs = E.get(payoutsPromise);
+      const amountsP = Promise.all(Object.values(payoutPs).map(burnRUNPayment));
+      return amountsP;
+    };
+
+    const getIssuerRecord = () => {
+      return harden({
+        issuer: runIssuer,
+        brand: runBrand,
+        assetKind: AssetKind.NAT,
+        displayInfo: {
+          assetKind: AssetKind.NAT,
+          decimalPlaces: 6n,
+        },
+      });
+    };
+
+    const runMint = harden({
+      burnLosses,
+      mintGains,
+      getIssuerRecord,
+    });
+
+    return { runMint, resolveRunMint: runMintPromiseKit.resolve };
+  };
+
+  const { runMint, resolveRunMint } = await makePseudoRunMint();
 
   assert.typeof(
     loanParams.chargingPeriod,
@@ -65,11 +130,11 @@ export async function start(zcf) {
     )}) must be a BigInt`,
   );
 
-  const [runMint, govMint] = await Promise.all([
-    zcf.makeZCFMint('RUN', undefined, harden({ decimalPlaces: 6 })),
-    zcf.makeZCFMint('Governance', undefined, harden({ decimalPlaces: 6 })),
-  ]);
-  const { issuer: runIssuer, brand: runBrand } = runMint.getIssuerRecord();
+  const govMint = await zcf.makeZCFMint(
+    'Governance',
+    undefined,
+    harden({ decimalPlaces: 6 }),
+  );
 
   const { brand: govBrand } = govMint.getIssuerRecord();
 
@@ -351,6 +416,7 @@ export async function start(zcf) {
     getRewardAllocation,
     getBootstrapPayment,
     makeCollectFeesInvitation,
+    resolveRunMint,
   });
 
   return harden({ creatorFacet: stablecoinMachine, publicFacet });
