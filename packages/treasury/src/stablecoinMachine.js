@@ -16,7 +16,19 @@ import '@agoric/zoe/src/contracts/exported';
 // pool.
 //
 // ownershipTokens for vaultManagers entitle holders to distributions, but you
-// can't redeem them outright, that would drain the utility from the economy.
+// can't redeem them outright, that would drain the utility from the
+// economy.
+
+// Run is minted in the following circumstances:
+
+// 1. To add liquidity to the AMM, based on an "initialPrice" parameter for the
+// collateral. -> goes into the AMM
+// 2. Minting a RUN payment per user in the bootstrap phase to kick off
+// the economy -> goes to bootstrap -> to user
+// 3. Opening a loan -> goes to user
+// 4. Adjusting the balance of a loan (and taking out more RUN) -> goes
+// to user
+// 5. Charging all vaults interest
 
 import { E } from '@agoric/eventual-send';
 import { assert, details, q } from '@agoric/assert';
