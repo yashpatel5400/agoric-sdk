@@ -4,6 +4,7 @@ import { assert, details as X } from '@agoric/assert';
 import { Far, passStyleOf } from '@agoric/marshal';
 import { sameStructure } from '@agoric/same-structure';
 import { makeHandle } from '@agoric/zoe/src/makeHandle';
+import { Nat } from '@agoric/nat';
 
 import { assertType, ParamType } from './paramManager';
 
@@ -86,6 +87,7 @@ const makeBallotSpec = (
   tieOutcome,
 ) => {
   verifyQuestionFormat(electionType, question);
+  Nat(closingRule.deadline);
 
   assert(
     positions.every(

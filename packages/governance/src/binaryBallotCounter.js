@@ -105,7 +105,7 @@ const makeBinaryBallotCounter = (ballotSpec, threshold, instance) => {
         X`The ballot's choice is not a legal position: ${filledBallot.chosen[0]}.`,
       );
       const finalBallot = makeWeightedBallot(filledBallot, shares);
-      allBallots.has(seat)
+      return allBallots.has(seat)
         ? allBallots.set(seat, finalBallot)
         : allBallots.init(seat, finalBallot);
     });

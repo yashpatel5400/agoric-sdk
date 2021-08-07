@@ -3,11 +3,16 @@
 import { E } from '@agoric/eventual-send';
 import { Far } from '@agoric/marshal';
 import { makeNotifierKit } from '@agoric/notifier';
-import { allComparable } from '@agoric/same-structure';
 import { makeStore } from '@agoric/store';
 import { natSafeMath } from '@agoric/zoe/src/contractSupport';
 
 import { QuorumRule } from './ballotBuilder';
+import {
+  startCounter,
+  getOpenQuestions,
+  getBallot,
+  getPoserInvitation,
+} from './registrarTools';
 
 const { ceilDivide } = natSafeMath;
 
@@ -21,28 +26,10 @@ const { ceilDivide } = natSafeMath;
 
 /** @type {ContractStartFn} */
 const start = zcf => {
-  /**
-   * @typedef {Object} QuestionRecord
-   * @property {ERef<VoterFacet>} voter
-   * @property {BallotCounterPublicFacet} publicFacet
-   */
-
   /** @type {Store<Handle<'Ballot'>, QuestionRecord>} */
   const allQuestions = makeStore('Question');
   const { notifier, updater } = makeNotifierKit();
   const invitations = [];
-
-  const getOpenQuestions = async () => {
-    const isOpenPQuestions = allQuestions.keys().map(key => {
-      const { publicFacet } = allQuestions.get(key);
-      return [E(publicFacet).isOpen(), key];
-    });
-
-    const isOpenQuestions = await allComparable(harden(isOpenPQuestions));
-    return isOpenQuestions
-      .filter(([open, _key]) => open)
-      .map(([_open, key]) => key);
-  };
 
   const makeCommitteeVoterInvitation = index => {
     const handler = voterSeat => {
@@ -84,44 +71,28 @@ const start = zcf => {
       }
     };
 
-    const ballotCounterTerms = {
+    return startCounter(
+      zcf,
       ballotSpec,
-      registrar: zcf.getInstance(),
-      quorumThreshold: quorumThreshold(ballotSpec.quorumRule),
-    };
-
-    // facets of the ballot counter. creatorInvitation and adminFacet not used
-    const { creatorFacet, publicFacet, instance } = await E(
-      zcf.getZoeService(),
-    ).startInstance(voteCounter, {}, ballotCounterTerms);
-    const details = await E(publicFacet).getDetails();
-    const facets = { voter: E(creatorFacet).getVoterFacet(), publicFacet };
-    allQuestions.init(details.handle, facets);
-
-    updater.updateState(details);
-    return { creatorFacet, publicFacet, instance };
+      quorumThreshold(ballotSpec.quorumRule),
+      voteCounter,
+      allQuestions,
+      updater,
+    );
   };
 
   /** @type {RegistrarPublic} */
   const publicFacet = Far('publicFacet', {
     getQuestionNotifier: () => notifier,
-    getOpenQuestions,
+    getOpenQuestions: () => getOpenQuestions(allQuestions),
     getName: () => committeeName,
     getInstance: zcf.getInstance,
-    getBallot: handleP =>
-      E.when(handleP, handle =>
-        E(allQuestions.get(handle).publicFacet).getBallotTemplate(),
-      ),
+    getBallot: handleP => getBallot(handleP, allQuestions),
   });
 
-  const getPoserInvitation = () => {
-    const questionPoserHandler = () => Far(`questionPoser`, { addQuestion });
-    return zcf.makeInvitation(questionPoserHandler, `questionPoser`);
-  };
-
-  /** @type {RegistrarCreator} */
-  const creatorFacet = Far('adminFacet', {
-    getPoserInvitation,
+  /** @type {CommitteeRegistrarCreator} */
+  const creatorFacet = Far('creatorFacet', {
+    getPoserInvitation: () => getPoserInvitation(zcf, addQuestion),
     addQuestion,
     getVoterInvitations: () => invitations,
     getQuestionNotifier: () => notifier,

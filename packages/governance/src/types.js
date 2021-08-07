@@ -214,20 +214,50 @@
  */
 
 /**
+ * @typedef {Object} MakeVoteInvitation
+ * @property {() => ERef<Invitation>} makeVoteInvitation
+ */
+
+/**
+ * @typedef { MakeVoteInvitation | RegistrarPublic } ClaimsRegistrarPublic
+ */
+
+/**
  * @typedef {Object} PoserFacet
  * @property {AddQuestion} addQuestion
  */
 
 /**
- * @typedef {Object} RegistrarCreator
+ * @typedef {Object} RegistrarCreatorShared
  *  addQuestion() can be used directly when the creator doesn't need any
  *  reassurance. When someone needs to connect addQuestion to the Registrar
  *  instance, getPoserInvitation() lets them get addQuestion with assurance.
  * @property {() => ERef<Invitation>} getPoserInvitation
  * @property {AddQuestion} addQuestion
- * @property {() => Invitation[]} getVoterInvitations
  * @property {() => Notifier<BallotDetails>} getQuestionNotifier
+ */
+
+/**
+ * @typedef {Object} RegistrarPublicFacet
  * @property {() => RegistrarPublic} getPublicFacet
+ */
+
+/**
+ * @typedef {Object} ClaimsRegistrarPublicFacet
+ * @property {() => ClaimsRegistrarPublic} getPublicFacet
+ */
+
+/**
+ * @typedef { RegistrarCreatorShared | RegistrarPublicFacet } CommitteeRegistrarCreator
+ */
+
+/**
+ * @typedef { RegistrarCreatorShared | ClaimsRegistrarPublicFacet } ClaimsRegistrarCreator
+ */
+
+/**
+ * @typedef {Object} GetVoterInvitations
+ * @property {() => Invitation[]} getVoterInvitations
  */
 
 /**
@@ -432,7 +462,7 @@
 
 /**
  * @callback StartGovernedContract
- * @param {RegistrarCreator} registrarCreatorFacet
+ * @param {RegistrarCreatorShared} registrarCreatorFacet
  * @param {Installation} governedContractInstallation
  * @param {IssuerKeywordRecord} issuerKeywordRecord
  * @param {Terms} customTerms
