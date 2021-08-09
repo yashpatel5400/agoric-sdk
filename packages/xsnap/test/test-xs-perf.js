@@ -55,18 +55,10 @@ test('meter details', async t => {
     {
       compute: 'number',
       allocate: 'number',
-      allocateChunksCalls: 'number',
-      allocateSlotsCalls: 'number',
-      garbageCollectionCount: 'number',
-      mapSetAddCount: 'number',
-      mapSetRemoveCount: 'number',
-      maxBucketSize: 'number',
     },
     'auxiliary (non-consensus) meters are available',
   );
-  // @ts-ignore extra meters not declared on RunResult (TODO: #3139)
-  t.true(meters.mapSetAddCount > 20000);
-  t.is(meterType, 'xs-meter-9');
+  t.is(meterType, 'xs-meter-10');
 });
 
 test('isReady does not compute / allocate', async t => {
