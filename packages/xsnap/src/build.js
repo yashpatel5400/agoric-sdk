@@ -96,6 +96,7 @@ const makeSubmodule = (path, repoUrl, { git }) => {
         path: statusPath,
         describe,
       }));
+
   return freeze({
     path,
     clone: async () => git.run(['clone', repoUrl, path]),
@@ -105,6 +106,26 @@ const makeSubmodule = (path, repoUrl, { git }) => {
     init: async () => git.run(['submodule', 'update', '--init', '--checkout']),
     status: async () =>
       git.pipe(['submodule', 'status', path]).then(parseStatus),
+    /** @param { string } leaf */
+    config: async leaf => {
+      // git rev-parse --show-toplevel
+      const top = await git
+        .pipe(['rev-parse', '--show-toplevel'])
+        .then(l => l.trimEnd());
+      // assume full paths
+      const name = path.slice(top.length + 1);
+      // git config -f ../../.gitmodules --get submodule."$name".url
+      const value = await git
+        .pipe([
+          'config',
+          '-f',
+          `${top}/.gitmodules`,
+          '--get',
+          `submodule.${name}.${leaf}`,
+        ])
+        .then(l => l.trimEnd());
+      return value;
+    },
   });
 };
 
@@ -146,7 +167,8 @@ async function main(args, { env, stdout, spawn, fs, os }) {
     for (const { path, envPrefix } of submodules) {
       const submodule = makeSubmodule(path, '?', { git });
       const [{ hash }] = await submodule.status();
-      // stdout.write(`${envPrefix}URL=${url}\n`);
+      const url = await submodule.config('url');
+      stdout.write(`${envPrefix}URL=${url}\n`);
       stdout.write(`${envPrefix}HASH=${hash}\n`);
     }
     return;
