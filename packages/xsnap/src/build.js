@@ -1,70 +1,145 @@
+#!/usr/bin/env node
 /* global process */
-import * as childProcess from 'child_process';
-import { existsSync, readFileSync } from 'fs';
-import os from 'os';
+// @ts-check
+import * as childProcessTop from 'child_process';
+import fsTop from 'fs';
+import osTop from 'os';
 
-function exec(command, cwd, args = []) {
-  const child = childProcess.spawn(command, args, {
-    cwd,
-    stdio: ['inherit', 'inherit', 'inherit'],
-  });
-  return new Promise((resolve, reject) => {
-    child.on('close', () => {
-      resolve();
-    });
-    child.on('error', err => {
-      reject(new Error(`${command} error ${err}`));
-    });
-    child.on('exit', code => {
-      if (code !== 0) {
-        reject(new Error(`${command} exited with code ${code}`));
-      }
-    });
+const { freeze } = Object;
+
+/** @param { string } path */
+const asset = path => new URL(path, import.meta.url).pathname;
+
+const ModdableSDK = {
+  MODDABLE: asset('../moddable'),
+  /** @type { Record<string, { path: string, make?: string }>} */
+  platforms: {
+    Linux: { path: 'lin' },
+    Darwin: { path: 'mac' },
+    Windows_NT: { path: 'win', make: 'nmake' },
+  },
+  buildGoals: ['release', 'debug'],
+};
+
+/**
+ * Adapt spawn to Promises style.
+ *
+ * @param {string} command
+ * @param {{
+ *   spawn: typeof import('child_process').spawn,
+ * }} io
+ */
+function makeCLI(command, { spawn }) {
+  return freeze({
+    /**
+     * @param {string[]} args
+     * @param {{ cwd?: string }=} opts
+     */
+    run: (args, opts) => {
+      const { cwd = '.' } = opts || {};
+      const child = spawn(command, args, {
+        cwd,
+        stdio: ['inherit', 'inherit', 'inherit'],
+      });
+      return new Promise((resolve, reject) => {
+        child.on('close', () => {
+          resolve(undefined);
+        });
+        child.on('error', err => {
+          reject(new Error(`${command} error ${err}`));
+        });
+        child.on('exit', code => {
+          if (code !== 0) {
+            reject(new Error(`${command} exited with code ${code}`));
+          }
+        });
+      });
+    },
   });
 }
 
-(async () => {
-  // Allow overriding of the checked-out version of the Moddable submodule.
-  const moddableCommitHash = process.env.MODDABLE_COMMIT_HASH;
-  const moddableUrl =
-    process.env.MODDABLE_URL || 'https://github.com/agoric-labs/moddable.git';
+/**
+ * @param {string} repoUrl
+ * @param {string} path
+ * @param {{ git: ReturnType<typeof makeCLI> }} io
+ */
+const makeSubmodule = (repoUrl, path, { git }) => {
+  return freeze({
+    path,
+    clone: async () => git.run(['clone', repoUrl, path]),
+    /** @param { string } commitHash */
+    checkout: async commitHash =>
+      git.run(['checkout', commitHash], { cwd: path }),
+    init: async () => git.run(['submodule', 'update', '--init', '--checkout']),
+  });
+};
 
-  if (moddableCommitHash) {
+/**
+ * @param {{
+ *   env: Record<string, string | undefined>,
+ *   spawn: typeof import('child_process').spawn,
+ *   fs: {
+ *     existsSync: typeof import('fs').existsSync,
+ *     readFile: typeof import('fs').promises.readFile,
+ *   },
+ *   os: {
+ *     type: typeof import('os').type,
+ *   }
+ * }} io
+ */
+async function main({ env, spawn, fs, os }) {
+  const moddable = makeSubmodule(
+    env.MODDABLE_URL || 'https://github.com/agoric-labs/moddable.git',
+    ModdableSDK.MODDABLE,
+    { git: makeCLI('git', { spawn }) },
+  );
+
+  // Allow overriding of the checked-out version of the Moddable submodule.
+  if (env.MODDABLE_COMMIT_HASH) {
     // Do the moral equivalent of submodule update when explicitly overriding.
-    if (!existsSync('moddable')) {
-      await exec('git', '.', [
-        'clone',
-        // NOTE: We need to depend on cloning from agoric-labs.
-        moddableUrl,
-        'moddable',
-      ]);
+    if (!fs.existsSync(moddable.path)) {
+      await moddable.clone();
     }
-    await exec('git', 'moddable', ['checkout', moddableCommitHash]);
+    moddable.checkout(env.MODDABLE_COMMIT_HASH);
   } else {
-    await exec('git', '.', ['submodule', 'update', '--init', '--checkout']);
+    await moddable.init();
   }
 
-  const pjson = readFileSync(
-    new URL('../package.json', import.meta.url).pathname,
-    'utf-8',
-  );
+  const pjson = await fs.readFile(asset('../package.json'), 'utf-8');
   const pkg = JSON.parse(pjson);
-  const XSNAP_VERSION = `XSNAP_VERSION=${pkg.version}`;
 
-  // Run command depending on the OS
-  if (os.type() === 'Linux') {
-    await exec('make', 'makefiles/lin', [XSNAP_VERSION]);
-    await exec('make', 'makefiles/lin', ['GOAL=debug', XSNAP_VERSION]);
-  } else if (os.type() === 'Darwin') {
-    await exec('make', 'makefiles/mac', [XSNAP_VERSION]);
-    await exec('make', 'makefiles/mac', ['GOAL=debug', XSNAP_VERSION]);
-  } else if (os.type() === 'Windows_NT') {
-    await exec('nmake', 'makefiles/win', [XSNAP_VERSION]);
-    await exec('make', 'makefiles/win', ['GOAL=debug', XSNAP_VERSION]);
-  } else {
+  const platform = ModdableSDK.platforms[os.type()];
+  if (!platform) {
     throw new Error(`Unsupported OS found: ${os.type()}`);
   }
-})().catch(e => {
+
+  const make = makeCLI(platform.make || 'make', { spawn });
+  for (const goal of ModdableSDK.buildGoals) {
+    // eslint-disable-next-line no-await-in-loop
+    await make.run(
+      [
+        `MODDABLE=${moddable.path}`,
+        `GOAL=${goal}`,
+        `XSNAP_VERSION=${pkg.version}`,
+      ],
+      {
+        cwd: `xsnap-native/xsnap/makefiles/${platform.path}`,
+      },
+    );
+  }
+}
+
+main({
+  env: { ...process.env },
+  spawn: childProcessTop.spawn,
+  fs: {
+    readFile: fsTop.promises.readFile,
+    existsSync: fsTop.existsSync,
+  },
+  os: {
+    type: osTop.type,
+  },
+}).catch(e => {
   console.error(e);
   process.exit(1);
 });
