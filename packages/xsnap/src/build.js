@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-await-in-loop */
 /* global process */
 // @ts-check
 import * as childProcessTop from 'child_process';
@@ -88,21 +89,35 @@ const makeSubmodule = (repoUrl, path, { git }) => {
  * }} io
  */
 async function main({ env, spawn, fs, os }) {
-  const moddable = makeSubmodule(
-    env.MODDABLE_URL || 'https://github.com/agoric-labs/moddable.git',
-    ModdableSDK.MODDABLE,
-    { git: makeCLI('git', { spawn }) },
-  );
+  const git = makeCLI('git', { spawn });
 
-  // Allow overriding of the checked-out version of the Moddable submodule.
-  if (env.MODDABLE_COMMIT_HASH) {
-    // Do the moral equivalent of submodule update when explicitly overriding.
-    if (!fs.existsSync(moddable.path)) {
-      await moddable.clone();
+  const submodules = [
+    {
+      url: env.MODDABLE_URL || 'https://github.com/agoric-labs/moddable.git',
+      path: ModdableSDK.MODDABLE,
+      commitHash: env.MODDABLE_COMMIT_HASH,
+    },
+    {
+      url:
+        env.XSNAP_NATIVE_URL || 'https://github.com/agoric-labs/xsnap-pub.git',
+      path: asset('../xsnap-native'),
+      commitHash: env.XSNAP_NATIVE_HASH,
+    },
+  ];
+
+  for (const { url, path, commitHash } of submodules) {
+    const submodule = makeSubmodule(url, path, { git });
+
+    // Allow overriding of the checked-out version of the submodule.
+    if (commitHash) {
+      // Do the moral equivalent of submodule update when explicitly overriding.
+      if (!fs.existsSync(submodule.path)) {
+        await submodule.clone();
+      }
+      submodule.checkout(commitHash);
+    } else {
+      await submodule.init();
     }
-    moddable.checkout(env.MODDABLE_COMMIT_HASH);
-  } else {
-    await moddable.init();
   }
 
   const pjson = await fs.readFile(asset('../package.json'), 'utf-8');
@@ -118,7 +133,7 @@ async function main({ env, spawn, fs, os }) {
     // eslint-disable-next-line no-await-in-loop
     await make.run(
       [
-        `MODDABLE=${moddable.path}`,
+        `MODDABLE=${ModdableSDK.MODDABLE}`,
         `GOAL=${goal}`,
         `XSNAP_VERSION=${pkg.version}`,
       ],
