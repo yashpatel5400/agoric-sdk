@@ -31,6 +31,22 @@ const ModdableSDK = {
  * }} io
  */
 function makeCLI(command, { spawn }) {
+  /** @param { import('child_process').ChildProcess } child */
+  const waiting = child =>
+    new Promise((resolve, reject) => {
+      child.on('close', () => {
+        resolve(undefined);
+      });
+      child.on('error', err => {
+        reject(new Error(`${command} error ${err}`));
+      });
+      child.on('exit', code => {
+        if (code !== 0) {
+          reject(new Error(`${command} exited with code ${code}`));
+        }
+      });
+    });
+
   return freeze({
     /**
      * @param {string[]} args
@@ -42,29 +58,44 @@ function makeCLI(command, { spawn }) {
         cwd,
         stdio: ['inherit', 'inherit', 'inherit'],
       });
-      return new Promise((resolve, reject) => {
-        child.on('close', () => {
-          resolve(undefined);
-        });
-        child.on('error', err => {
-          reject(new Error(`${command} error ${err}`));
-        });
-        child.on('exit', code => {
-          if (code !== 0) {
-            reject(new Error(`${command} exited with code ${code}`));
-          }
-        });
+      return waiting(child);
+    },
+    /**
+     * @param {string[]} args
+     * @param {{ cwd?: string }=} opts
+     */
+    pipe: (args, opts) => {
+      const { cwd = '.' } = opts || {};
+      const child = spawn(command, args, {
+        cwd,
+        stdio: ['inherit', 'pipe', 'inherit'],
       });
+      let output = '';
+      child.stdout.setEncoding('utf8');
+      child.stdout.on('data', data => {
+        output += data.toString();
+      });
+      return waiting(child).then(() => output);
     },
   });
 }
 
 /**
- * @param {string} repoUrl
  * @param {string} path
+ * @param {string} repoUrl
  * @param {{ git: ReturnType<typeof makeCLI> }} io
  */
-const makeSubmodule = (repoUrl, path, { git }) => {
+const makeSubmodule = (path, repoUrl, { git }) => {
+  /** @param { string } text */
+  const parseStatus = text =>
+    text
+      .split('\n')
+      .map(line => line.split(' ', 4))
+      .map(([_indent, hash, statusPath, describe]) => ({
+        hash,
+        path: statusPath,
+        describe,
+      }));
   return freeze({
     path,
     clone: async () => git.run(['clone', repoUrl, path]),
@@ -72,12 +103,16 @@ const makeSubmodule = (repoUrl, path, { git }) => {
     checkout: async commitHash =>
       git.run(['checkout', commitHash], { cwd: path }),
     init: async () => git.run(['submodule', 'update', '--init', '--checkout']),
+    status: async () =>
+      git.pipe(['submodule', 'status', path]).then(parseStatus),
   });
 };
 
 /**
+ * @param { string[] } args
  * @param {{
  *   env: Record<string, string | undefined>,
+ *   stdout: typeof process.stdout,
  *   spawn: typeof import('child_process').spawn,
  *   fs: {
  *     existsSync: typeof import('fs').existsSync,
@@ -88,7 +123,7 @@ const makeSubmodule = (repoUrl, path, { git }) => {
  *   }
  * }} io
  */
-async function main({ env, spawn, fs, os }) {
+async function main(args, { env, stdout, spawn, fs, os }) {
   const git = makeCLI('git', { spawn });
 
   const submodules = [
@@ -96,17 +131,29 @@ async function main({ env, spawn, fs, os }) {
       url: env.MODDABLE_URL || 'https://github.com/agoric-labs/moddable.git',
       path: ModdableSDK.MODDABLE,
       commitHash: env.MODDABLE_COMMIT_HASH,
+      envPrefix: 'MODDABLE_',
     },
     {
       url:
         env.XSNAP_NATIVE_URL || 'https://github.com/agoric-labs/xsnap-pub.git',
       path: asset('../xsnap-native'),
       commitHash: env.XSNAP_NATIVE_HASH,
+      envPrefix: 'XSNAP_NATIVE_',
     },
   ];
 
+  if (args.includes('--show-env')) {
+    for (const { path, envPrefix } of submodules) {
+      const submodule = makeSubmodule(path, '?', { git });
+      const [{ hash }] = await submodule.status();
+      // stdout.write(`${envPrefix}URL=${url}\n`);
+      stdout.write(`${envPrefix}HASH=${hash}\n`);
+    }
+    return;
+  }
+
   for (const { url, path, commitHash } of submodules) {
-    const submodule = makeSubmodule(url, path, { git });
+    const submodule = makeSubmodule(path, url, { git });
 
     // Allow overriding of the checked-out version of the submodule.
     if (commitHash) {
@@ -144,8 +191,9 @@ async function main({ env, spawn, fs, os }) {
   }
 }
 
-main({
+main(process.argv.slice(2), {
   env: { ...process.env },
+  stdout: process.stdout,
   spawn: childProcessTop.spawn,
   fs: {
     readFile: fsTop.promises.readFile,
