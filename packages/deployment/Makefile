@@ -28,8 +28,8 @@ docker-build: docker-build-sdk docker-build-solo \
 docker-build-sdk:
 	docker build --build-arg=MODDABLE_COMMIT_HASH=$(MODDABLE_COMMIT_HASH) \
 		--build-arg=MODDABLE_URL=$(MODDABLE_URL) \
-		--build-arg=XSNAP_NATIVE_COMMIT_HASH=$(MODDABLE_COMMIT_HASH) \
-		--build-arg=XSNAP_NATIVE_URL=$(MODDABLE_URL) \
+		--build-arg=XSNAP_NATIVE_COMMIT_HASH=$(XSNAP_NATIVE_COMMIT_HASH) \
+		--build-arg=XSNAP_NATIVE_URL=$(XSNAP_NATIVE_URL) \
 		--build-arg=GIT_REVISION=$(GIT_REVISION) \
 		-t $(REPOSITORY_SDK):$(TAG) --file=Dockerfile.sdk ../..
 	docker tag $(REPOSITORY_SDK):$(TAG) $(REPOSITORY_SDK):latest
