@@ -5,8 +5,26 @@ import { parseVatSlot } from '../src/parseVatSlots.js';
 
 import { makeVirtualObjectManager } from '../src/kernel/virtualObjectManager.js';
 
+class FakeFinalizationRegistry {
+  // eslint-disable-next-line no-useless-constructor, no-empty-function
+  constructor() {}
+
+  // eslint-disable-next-line class-methods-use-this
+  register(_target, _heldValue, _unregisterToken) {}
+
+  // eslint-disable-next-line class-methods-use-this
+  unregister(_unregisterToken) {}
+}
+
 export function makeFakeVirtualObjectManager(options = {}) {
-  const { cacheSize = 100, log, weak = false } = options;
+  const {
+    cacheSize = 100,
+    log,
+    weak = false,
+    // eslint-disable-next-line no-use-before-define
+    FinalizationRegistry = FakeFinalizationRegistry,
+    addToPossiblyDeadSet = () => {},
+  } = options;
   const fakeStore = new Map();
 
   function dumpStore() {
@@ -109,8 +127,8 @@ export function makeFakeVirtualObjectManager(options = {}) {
     makeKind,
     VirtualObjectAwareWeakMap,
     VirtualObjectAwareWeakSet,
-    isVrefReachable,
-    setExported,
+    isPresenceReachable,
+    setExportStatus,
     possibleVirtualObjectDeath,
     flushCache,
   } = makeVirtualObjectManager(
@@ -121,6 +139,8 @@ export function makeFakeVirtualObjectManager(options = {}) {
     registerEntry,
     fakeMarshal,
     cacheSize,
+    FinalizationRegistry,
+    addToPossiblyDeadSet,
   );
 
   const normalVOM = {
@@ -128,8 +148,8 @@ export function makeFakeVirtualObjectManager(options = {}) {
     makeWeakStore,
     VirtualObjectAwareWeakMap,
     VirtualObjectAwareWeakSet,
-    isVrefReachable,
-    setExported,
+    isPresenceReachable,
+    setExportStatus,
     possibleVirtualObjectDeath,
   };
 
