@@ -205,6 +205,8 @@ async function main(args, { env, stdout, spawn, fs, os }) {
         `MODDABLE=${ModdableSDK.MODDABLE}`,
         `GOAL=${goal}`,
         `XSNAP_VERSION=${pkg.version}`,
+        '-f',
+        'xsnap-worker.mk',
       ],
       {
         cwd: `xsnap-native/xsnap/makefiles/${platform.path}`,
