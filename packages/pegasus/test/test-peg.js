@@ -7,6 +7,7 @@ import {
   makeLoopbackProtocolHandler,
 } from '@agoric/swingset-vat/src/vats/network/index.js';
 
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 import bundleSource from '@agoric/bundle-source';
 import { AmountMath } from '@agoric/ertp';
 import { makeZoe } from '@agoric/zoe';
@@ -47,7 +48,8 @@ async function testRemotePeg(t) {
     },
   });
 
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+    const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const contractBundle = await bundleSource(contractPath);

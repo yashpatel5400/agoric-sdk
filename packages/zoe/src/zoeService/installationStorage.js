@@ -13,7 +13,7 @@ export const makeInstallationStorage = assertFeePurse => {
    * evaluated each time it is used to make a new instance of a contract.
    */
   /** @type {Install} */
-  const install = (feePurse, bundle) => {
+  const install = async (feePurse, bundle) => {
     assert.typeof(bundle, 'object', X`a bundle must be provided`);
     assertFeePurse(feePurse);
     /** @type {Installation} */

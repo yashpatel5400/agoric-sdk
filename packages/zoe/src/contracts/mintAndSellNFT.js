@@ -27,7 +27,7 @@ import { assert } from '@agoric/assert';
  *
  * @type {ContractStartFn}
  */
-const start = zcf => {
+const start = (zcf, { feePurse }) => {
   const { tokenName = 'token' } = zcf.getTerms();
   // Create the internal token mint
   const { issuer, mint, brand } = makeIssuerKit(tokenName, AssetKind.SET);
@@ -84,6 +84,7 @@ const start = zcf => {
      * }>}
      */
     const instanceRecordP = E(zoeService).startInstance(
+      feePurse,
       sellItemsInstallation,
       issuerKeywordRecord,
       sellItemsTerms,
@@ -92,7 +93,7 @@ const start = zcf => {
       ({ creatorInvitation, creatorFacet, instance, publicFacet }) => {
         assert(creatorInvitation);
         return E(zoeService)
-          .offer(creatorInvitation, proposal, paymentKeywordRecord)
+          .offer(feePurse, creatorInvitation, proposal, paymentKeywordRecord)
           .then(sellItemsCreatorSeat => {
             return harden({
               sellItemsCreatorSeat,

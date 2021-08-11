@@ -14,6 +14,7 @@ import buildManualTimer from '../../../tools/manualTimer.js';
 import { setup } from '../setupBasicMints.js';
 import { setupMixed } from '../setupMixedMints.js';
 import fakeVatAdmin from '../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -245,7 +246,8 @@ test('zoe - secondPriceAuction w/ 3 bids', async t => {
 test('zoe - secondPriceAuction - alice tries to exit', async t => {
   t.plan(12);
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Setup Alice
   const aliceMoolaPayment = moolaR.mint.mintPayment(moola(1));

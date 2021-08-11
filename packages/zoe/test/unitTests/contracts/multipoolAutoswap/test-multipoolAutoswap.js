@@ -8,6 +8,7 @@ import bundleSource from '@agoric/bundle-source';
 import { makeIssuerKit, AmountMath } from '@agoric/ertp';
 import { E } from '@agoric/eventual-send';
 import fakeVatAdmin from '../../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../../src/applyFeePurse.js';
 
 // noinspection ES6PreferShortImport
 import { makeZoe } from '../../../../src/zoeService/zoe.js';
@@ -33,7 +34,8 @@ const multipoolAutoswapRoot = `${dirname}/../../../../src/contracts/multipoolAut
 
 test('multipoolAutoSwap with valid offers', async t => {
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
   const invitationBrand = await E(invitationIssuer).getBrand();
 
@@ -546,7 +548,8 @@ test('multipoolAutoSwap with valid offers', async t => {
 
 test('multipoolAutoSwap get detailed prices', async t => {
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
   const invitationBrand = await E(invitationIssuer).getBrand();
 
@@ -728,7 +731,8 @@ test('multipoolAutoSwap get detailed prices', async t => {
 
 test('multipoolAutoSwap with some invalid offers', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
 
   // Set up central token
@@ -789,7 +793,8 @@ test('multipoolAutoSwap with some invalid offers', async t => {
 
 test('multipoolAutoSwap jig - addLiquidity', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -923,7 +928,8 @@ test('multipoolAutoSwap jig - addLiquidity', async t => {
 
 test('multipoolAutoSwap jig - check liquidity', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1058,7 +1064,8 @@ test('multipoolAutoSwap jig - check liquidity', async t => {
 
 test('multipoolAutoSwap jig - swapOut', async t => {
   const { moolaR, moola, simoleanR, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1270,7 +1277,8 @@ test('multipoolAutoSwap jig - swapOut', async t => {
 
 test('multipoolAutoSwap jig - swapOut uneven', async t => {
   const { moolaR, moola, simoleanR, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1452,7 +1460,8 @@ test('multipoolAutoSwap jig - swapOut uneven', async t => {
 
 test('multipoolAutoSwap jig - removeLiquidity', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1564,7 +1573,8 @@ test('multipoolAutoSwap jig - removeLiquidity', async t => {
 
 test('multipoolAutoSwap jig - removeLiquidity ask for too much', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1660,7 +1670,8 @@ test('multipoolAutoSwap jig - removeLiquidity ask for too much', async t => {
 
 test('multipoolAutoSwap jig - remove all liquidity', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1755,7 +1766,8 @@ test('multipoolAutoSwap jig - remove all liquidity', async t => {
 
 test('multipoolAutoSwap jig - insufficient', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(multipoolAutoswapRoot);
@@ -1849,7 +1861,8 @@ test('multipoolAutoSwap jig - insufficient', async t => {
 });
 
 test('multipoolAutoSwap collect empty fees', async t => {
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const centralR = makeIssuerKit('central');
   const centralTokens = value => AmountMath.make(value, centralR.brand);
 
@@ -1881,7 +1894,8 @@ test('multipoolAutoSwap collect empty fees', async t => {
 
 test('multipoolAutoSwap swapout secondary to secondary', async t => {
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
   const invitationBrand = await E(invitationIssuer).getBrand();
 

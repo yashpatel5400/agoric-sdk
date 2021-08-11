@@ -17,7 +17,7 @@ const setupMakeFeePurse = feeIssuer => {
   const feePurses = new WeakSet();
 
   /** @type {MakeFeePurse} */
-  const makeFeePurse = () => {
+  const makeFeePurse = async () => {
     const purse = feeIssuer.makeEmptyPurse();
     /** @type {FeePurse} */
     const feePurse = Far('feePurse', {

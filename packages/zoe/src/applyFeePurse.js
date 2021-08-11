@@ -1,6 +1,7 @@
 // @ts-check
 
 import { E } from '@agoric/eventual-send';
+import { Far } from '../../marshal';
 
 /**
  * Partially apply an already existing feePurse to Zoe methods.
@@ -10,7 +11,7 @@ import { E } from '@agoric/eventual-send';
  * @returns {ZoeServiceWFeePurseApplied}
  */
 const applyFeePurse = (zoe, feePurse) => {
-  return {
+  return Far('ZoeServiceWFeePurseApplied', {
     makeFeePurse: (...args) => E(zoe).makeFeePurse(...args),
 
     // A feePurse is required
@@ -29,8 +30,9 @@ const applyFeePurse = (zoe, feePurse) => {
     getInstance: (...args) => E(zoe).getInstance(...args),
     getInstallation: (...args) => E(zoe).getInstallation(...args),
     getInvitationDetails: (...args) => E(zoe).getInvitationDetails(...args),
-    getInstallationForInstance: (...args) => E(zoe).getInstallationForInstance(...args),
-  };
+    getInstallationForInstance: (...args) =>
+      E(zoe).getInstallationForInstance(...args),
+  });
 };
 
 /**

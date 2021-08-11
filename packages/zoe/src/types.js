@@ -51,7 +51,7 @@
  *
  * See ZoeService for comments.
  *
- * @property {() => Issuer} getInvitationIssuer
+ * @property {() => Promise<Issuer>} getInvitationIssuer
  *
  * @property {InstallWFeePurseApplied} install
  * @property {StartInstanceWFeePurseApplied} startInstance
@@ -86,7 +86,7 @@
  * See Install for comments.
  *
  * @param {SourceBundle} bundle
- * @returns {Installation}
+ * @returns {Promise<Installation>}
  */
 
 /**
@@ -108,7 +108,6 @@
  *
  * See Offer for comments.
  *
- * @param {ERef<FeePurse>} feePurse
  * @param {ERef<Invitation>} invitation
  * @param {Proposal=} proposal
  * @param {PaymentPKeywordRecord=} paymentKeywordRecord

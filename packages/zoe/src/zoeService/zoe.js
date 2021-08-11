@@ -113,8 +113,8 @@ const makeZoe = (
 
     // The functions below are getters only and have no impact on
     // state within Zoe
-    getInvitationIssuer: () => invitationIssuer,
-    getFeeIssuer: () => feeIssuer,
+    getInvitationIssuer: async () => invitationIssuer,
+    getFeeIssuer: async () => feeIssuer,
     getBrands,
     getIssuers,
     getTerms,

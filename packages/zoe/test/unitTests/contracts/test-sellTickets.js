@@ -10,6 +10,7 @@ import { makeIssuerKit, AmountMath } from '@agoric/ertp';
 import { looksLikeSetValue } from '@agoric/ertp/src/typeGuards.js';
 import { E } from '@agoric/eventual-send';
 import fakeVatAdmin from '../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 // noinspection ES6PreferShortImport
 import { makeZoe } from '../../../src/zoeService/zoe.js';
@@ -23,7 +24,8 @@ const sellItemsRoot = `${dirname}/../../../src/contracts/sellItems.js`;
 
 test(`mint and sell tickets for multiple shows`, async t => {
   // Setup initial conditions
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);
@@ -147,7 +149,8 @@ test(`mint and sell opera tickets`, async t => {
 
   const moola = value => AmountMath.make(value, moolaBrand);
 
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);
@@ -541,7 +544,8 @@ test(`mint and sell opera tickets`, async t => {
 //
 test('Testing publicFacet.getAvailableItemsNotifier()', async t => {
   // Setup initial conditions
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);

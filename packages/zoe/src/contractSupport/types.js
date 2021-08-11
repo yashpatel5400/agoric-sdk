@@ -74,6 +74,8 @@
  * contract instance (contractA) and depositing the payouts in another
  * seat in the current contract instance (contractA).
  *
+ * @param {FeePurse} feePurse
+ *
  * @param {ContractFacet} zcf
  *   Zoe Contract Facet for contractA
  *

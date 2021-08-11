@@ -15,7 +15,7 @@ import {
 } from './helpers.js';
 
 test('test doLiquidation with mocked autoswap', async t => {
-  const { zcf, collateralKit, loanKit } = await setupLoanUnitTest();
+  const { zcf, collateralKit, loanKit, feePurse } = await setupLoanUnitTest();
   // Set up the lender seat. At this point the lender has nothing.
   const { zcfSeat: lenderSeat, userSeat: lenderUserSeat } = await makeSeatKit(
     zcf,
@@ -64,6 +64,7 @@ test('test doLiquidation with mocked autoswap', async t => {
   });
 
   await doLiquidation(
+    feePurse,
     zcf,
     collateralSeat,
     autoswapPublicFacetP,
@@ -100,7 +101,7 @@ test('test doLiquidation with mocked autoswap', async t => {
 });
 
 test('test with malfunctioning autoswap', async t => {
-  const { zcf, collateralKit, loanKit } = await setupLoanUnitTest();
+  const { zcf, collateralKit, loanKit, feePurse } = await setupLoanUnitTest();
   // Set up the lender seat. At this point the lender has nothing.
   const { zcfSeat: lenderSeat, userSeat: lenderUserSeat } = await makeSeatKit(
     zcf,
@@ -133,6 +134,7 @@ test('test with malfunctioning autoswap', async t => {
   await t.throwsAsync(
     () =>
       doLiquidation(
+        feePurse,
         zcf,
         collateralSeat,
         autoswapPublicFacetP,

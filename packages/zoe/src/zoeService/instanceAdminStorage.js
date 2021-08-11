@@ -13,18 +13,18 @@ export const makeInstanceAdminStorage = assertFeePurse => {
   };
 
   /** @type {GetBrands} */
-  const getBrands = instance =>
+  const getBrands = async instance =>
     instanceToInstanceAdmin.get(instance).getBrands();
 
   /** @type {GetIssuers} */
-  const getIssuers = instance =>
+  const getIssuers = async instance =>
     instanceToInstanceAdmin.get(instance).getIssuers();
 
   /** @type {GetTerms} */
   const getTerms = instance => instanceToInstanceAdmin.get(instance).getTerms();
 
   /** @type {GetInstallationForInstance} */
-  const getInstallationForInstance = instance =>
+  const getInstallationForInstance = async instance =>
     instanceToInstanceAdmin.get(instance).getInstallationForInstance();
 
   return harden({

@@ -10,6 +10,7 @@ import bundleSource from '@agoric/bundle-source';
 import { E } from '@agoric/eventual-send';
 import { makeZoe } from '../../src/zoeService/zoe.js';
 import fakeVatAdmin from '../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -18,7 +19,8 @@ const root = `${dirname}/../minimalMakeKindContract.js`;
 
 test('makeKind non-swingset', async t => {
   const bundle = await bundleSource(root);
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const installation = await E(zoe).install(bundle);
   t.notThrows(() => makeKind());
   t.notThrows(() => makeVirtualScalarWeakMap());

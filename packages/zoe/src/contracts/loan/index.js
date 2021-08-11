@@ -57,7 +57,7 @@ import { makeLendInvitation } from './lend.js';
  *
  * @type {ContractStartFn}
  */
-const start = async zcf => {
+const start = async (zcf, privateArgs) => {
   assertIssuerKeywords(zcf, harden(['Collateral', 'Loan']));
 
   // Rather than grabbing the terms each time we use them, let's set
@@ -90,7 +90,11 @@ const start = async zcf => {
     collateralBrand,
   };
 
-  const creatorInvitation = makeLendInvitation(zcf, harden(config));
+  const creatorInvitation = makeLendInvitation(
+    zcf,
+    harden(config),
+    privateArgs,
+  );
 
   return { creatorInvitation };
 };

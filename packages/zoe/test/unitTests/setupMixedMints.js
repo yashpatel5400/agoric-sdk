@@ -3,6 +3,7 @@
 import { makeIssuerKit, AmountMath, AssetKind } from '@agoric/ertp';
 import { makeZoe } from '../../src/zoeService/zoe.js';
 import fakeVatAdmin from '../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../src/applyFeePurse.js';
 
 const setupMixed = () => {
   const ccBundle = makeIssuerKit('CryptoCats', AssetKind.SET);
@@ -25,7 +26,8 @@ const setupMixed = () => {
   const cryptoCats = value => AmountMath.make(value, allBundles.cc.brand);
   const moola = value => AmountMath.make(value, allBundles.moola.brand);
 
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   return {
     zoe,
     ccIssuer,

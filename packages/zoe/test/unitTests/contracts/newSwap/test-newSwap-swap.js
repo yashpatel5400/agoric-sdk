@@ -9,6 +9,7 @@ import { makeIssuerKit, AmountMath } from '@agoric/ertp';
 import { E } from '@agoric/eventual-send';
 import { assert, q } from '@agoric/assert';
 import fakeVatAdmin from '../../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../../src/applyFeePurse.js';
 
 // noinspection ES6PreferShortImport
 import { makeZoe } from '../../../../src/zoeService/zoe.js';
@@ -37,7 +38,8 @@ const newSwapRoot = `${dirname}/../../../../src/contracts/newSwap/multipoolAutos
 
 test('newSwap with valid offers', async t => {
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
   const invitationBrand = await E(invitationIssuer).getBrand();
 
@@ -390,7 +392,8 @@ test('newSwap with valid offers', async t => {
 
 test('newSwap doubleSwap', async t => {
   const { moolaR, simoleanR, moola, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Set up central token
   const centralR = makeIssuerKit('central');
@@ -611,7 +614,8 @@ test('newSwap doubleSwap', async t => {
 
 test('newSwap with some invalid offers', async t => {
   const { moolaR, moola } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const invitationIssuer = zoe.getInvitationIssuer();
 
   // Set up central token
@@ -674,7 +678,8 @@ test('newSwap with some invalid offers', async t => {
 
 test('newSwap jig - swapOut uneven', async t => {
   const { moolaR, moola, simoleanR, simoleans } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(newSwapRoot);
@@ -911,7 +916,8 @@ test('newSwap jig - swapOut uneven', async t => {
 
 test('newSwap jig - breaking scenario', async t => {
   const { moolaR, moola, simoleanR } = setup();
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Pack the contract.
   const bundle = await bundleSource(newSwapRoot);
@@ -1028,7 +1034,8 @@ test('newSwap jig - breaking scenario', async t => {
 // This demonstrates that Zoe can reallocate empty amounts. i.e. that
 // https://github.com/Agoric/agoric-sdk/issues/3033 stays fixed
 test('zoe allow empty reallocations', async t => {
-  const { zoeService: zoe } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // Set up central token
   const { issuer, brand } = makeIssuerKit('central');

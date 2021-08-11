@@ -111,6 +111,8 @@ export const setupLoanUnitTest = async terms => {
     terms,
   );
 
+  const feePurse = E(zoe).makeFeePurse();
+
   return {
     zcf,
     zoe,
@@ -118,6 +120,7 @@ export const setupLoanUnitTest = async terms => {
     loanKit,
     installation,
     instance,
+    feePurse,
   };
 };
 
