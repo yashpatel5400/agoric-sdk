@@ -5,7 +5,6 @@ import '@agoric/zoe/src/types';
 import { makeIssuerKit, AssetKind, AmountMath } from '@agoric/ertp';
 
 import { assert } from '@agoric/assert';
-import { E } from '@agoric/eventual-send';
 import buildManualTimer from '@agoric/zoe/tools/manualTimer';
 import { makeFakePriceAuthority } from '@agoric/zoe/tools/fakePriceAuthority';
 import { makeRatio } from '@agoric/zoe/src/contractSupport/ratio';
@@ -28,7 +27,6 @@ export async function start(zcf) {
   const runMint = await zcf.makeZCFMint('RUN');
   const { brand: runBrand } = runMint.getIssuerRecord();
 
-  const { zcfSeat: _collateralSt, userSeat: liqSeat } = zcf.makeEmptySeatKit();
   const { zcfSeat: stableCoinSeat } = zcf.makeEmptySeatKit();
 
   /** @type {MultipoolAutoswapPublicFacet} */
@@ -100,11 +98,10 @@ export async function start(zcf) {
   zcf.setTestJig(() => ({ collateralKit, runMint, vault, timer }));
 
   async function makeHook(seat) {
-    const { notifier, collateralPayoutP } = await openLoan(seat);
+    const { notifier } = await openLoan(seat);
 
     return {
       vault,
-      liquidationPayout: E(liqSeat).getPayout('Collateral'),
       runMint,
       collateralKit,
       actions: Far('vault actions', {
@@ -114,7 +111,6 @@ export async function start(zcf) {
         accrueInterestAndAddToPool,
       }),
       notifier,
-      collateralPayoutP,
     };
   }
 
