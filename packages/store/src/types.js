@@ -14,7 +14,7 @@
  */
 
 /**
- * @template {Structure} K
+ * @template {Key} K
  * @template {Passable} V
  * @typedef {Object} Store
  *
@@ -37,7 +37,7 @@
  */
 
 /**
- * @template {Structure} K
+ * @template {Key} K
  * @template {Passable} V
  * @typedef {Object} WeakStore
  *

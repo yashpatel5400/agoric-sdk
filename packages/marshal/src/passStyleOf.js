@@ -8,7 +8,7 @@ import { isPrimitive, PASS_STYLE } from './helpers/passStyle-helpers.js';
 
 import { CopyArrayHelper } from './helpers/copyArray.js';
 import { CopyRecordHelper } from './helpers/copyRecord.js';
-import { CopyTaggedHelper, MetaTaggedHelper } from './helpers/tagged.js';
+import { CopyTaggedHelper } from './helpers/tagged.js';
 import { RemotableHelper } from './helpers/remotable.js';
 import { ErrorHelper } from './helpers/error.js';
 
@@ -43,7 +43,6 @@ const makePassStyleOfKit = passStyleHelpers => {
     copyTagged: undefined,
     remotable: undefined,
     error: undefined,
-    metaTagged: undefined,
   };
   for (const helper of passStyleHelpers) {
     const { styleName } = helper;
@@ -194,7 +193,6 @@ const { passStyleOf, HelperTable } = makePassStyleOfKit([
   CopyTaggedHelper,
   RemotableHelper,
   ErrorHelper,
-  MetaTaggedHelper,
 ]);
 
 export { passStyleOf };

@@ -3,6 +3,7 @@
 // eslint-disable-next-line spaced-comment
 /// <reference types="ses"/>
 
+import { E } from '@agoric/eventual-send';
 import {
   passStyleOf,
   isPrimitive,
@@ -10,13 +11,18 @@ import {
   compareRank,
   makeCopyTagged,
   getPassStyleCover,
+  getTag,
 } from '@agoric/marshal';
 
 // eslint-disable-next-line import/no-cycle
 import { CopyArrayMatcher } from './copyArrayMatcher.js';
+// import { CopyRecordMatcher } from './copyRecordMatcher.js';
 // import { CopySetMatcher } from './copySetMatcher.js';
 // import { CopyMapMatcher } from './copyMapMatcher.js';
 // import { PatternNodeMatchers } from './patternNodeMatchers.js';
+
+const { details: X, quote: q } = assert;
+const { fromEntries, getOwnPropertyNames } = Object;
 
 /**
  * @param {Passable} passable
@@ -58,6 +64,10 @@ export const keyStyleOf = passable => {
   return keyStyle;
 };
 harden(keyStyleOf);
+
+export const assertKey = passable =>
+  assert(isKey(passable), X`Must be a key ${passable}`);
+harden(assertKey);
 
 /**
  * @param {Passable} passable
@@ -227,3 +237,55 @@ export const getKeyStyleCover = keyStyle => {
   }
 };
 harden(getKeyStyleCover);
+
+/**
+ * We say that a function *reveals* an X when it returns either an X
+ * or a promise for an X.
+ *
+ * Given a passable, reveal a corresponding key, where each
+ * leaf promise of the passable has been replaced with its
+ * corresponding key, recursively.
+ *
+ * @param {Passable} passable
+ * @returns {import('@agoric/eventual-send').ERef<Key>}
+ */
+export const fulfillToKey = passable => {
+  if (isKey(passable)) {
+    // Causes deep memoization, so is amortized fast.
+    return passable;
+  }
+  // Below, we only need to deal with the cases where passable may not
+  // be a key.
+  const passStyle = passStyleOf(passable);
+  switch (passStyle) {
+    case 'promise': {
+      return E.when(passable, nonp => fulfillToKey(nonp));
+    }
+    case 'copyRecord': {
+      const names = getOwnPropertyNames(passable);
+      const valPs = names.map(name => fulfillToKey(passable[name]));
+      return E.when(Promise.all(valPs), vals =>
+        harden(fromEntries(vals.map((val, i) => [names[i], val]))),
+      );
+    }
+    case 'copyArray': {
+      const valPs = passable.map(p => fulfillToKey(p));
+      return E.when(Promise.all(valPs), vals => harden(vals));
+    }
+    case 'copyTagged': {
+      return E.when(fulfillToKey(passable.payload), payload =>
+        makeCopyTagged(getTag(passable), payload),
+      );
+    }
+    case 'error': {
+      assert.fail(
+        X`Errors are passable but no longer structure: ${passable}`,
+        TypeError,
+      );
+    }
+    default: {
+      assert.fail(X`PassStyle ${q(passStyle)} cannot be structure`, TypeError);
+    }
+  }
+};
+harden(fulfillToKey);

@@ -1,42 +1,8 @@
 // @ts-check
 
 import { assert, details as X, q } from '@agoric/assert';
-import { passStyleOf, assertStructure, Far } from '@agoric/marshal';
-
-const assertKey = key => {
-  // TODO: Just a transition kludge. Remove when possible.
-  // See https://github.com/Agoric/agoric-sdk/issues/3606
-  harden(key);
-  assertStructure(key);
-  const passStyle = passStyleOf(key);
-
-  // TODO There should be no full switches on passStyle outside the
-  // marshal module. It should export the predicates we need so we
-  // can just use those predicates here.
-  // TODO Resolve before merging.
-  switch (passStyle) {
-    case 'bigint':
-    case 'boolean':
-    case 'null':
-    case 'number':
-    case 'string':
-    case 'symbol':
-    case 'undefined':
-    case 'remotable': {
-      return;
-    }
-    case 'copyRecord':
-    case 'copyArray':
-    case 'copyTagged': {
-      assert.fail(X`composite keys not yet allowed: ${key}`);
-    }
-    // Cases 'error', 'promise', 'metaTagged' are precluded
-    // by`assertStructure` above
-    default: {
-      assert.fail(X`unexpected passStyle ${passStyle}`);
-    }
-  }
-};
+import { passStyleOf, Far } from '@agoric/marshal';
+import { assertKey } from './matchers/compareKeys.js';
 
 const assertValue = value => {
   // TODO: Just a transition kludge. Remove when possible.
@@ -75,6 +41,7 @@ export const makeScalarMap = (keyName = 'key', _options = {}) => {
       return m.has(key);
     },
     init: (key, value) => {
+      harden(key); // TODO: Just a transition kludge #3606
       assertKey(key);
       assertValue(value);
       assertKeyDoesNotExist(key);

@@ -10,7 +10,7 @@ import { passStyleOf } from './passStyleOf.js';
 import './types.js';
 import { getInterfaceOf } from './helpers/remotable.js';
 import { ErrorHelper, getErrorConstructor } from './helpers/error.js';
-import { makeCopyTagged, makeMetaTagged } from './makeTagged.js';
+import { makeCopyTagged } from './makeTagged.js';
 import { getTag } from './helpers/passStyle-helpers.js';
 import {
   assertPassableSymbol,
@@ -140,8 +140,7 @@ export function makeMarshal(
 
     /**
      * Must encode `val` into plain JSON data *canonically*, such that
-     * `sameStructure(v1, v2)` implies
-     * `JSON.stringify(encode(v1)) === JSON.stringify(encode(v2))`
+     * `JSON.stringify(encode(v1)) === JSON.stringify(encode(v1))`
      * For each record, we only accept sortable property names
      * (no anonymous symbols). On the encoded form the sort
      * order of these names must be the same as their enumeration
@@ -257,15 +256,6 @@ export function makeMarshal(
         case 'promise': {
           // console.log(`serializeSlot: ${val}`);
           return serializeSlot(val);
-        }
-        case 'metaTagged': {
-          /** @type {Encoding} */
-          const result = harden({
-            [QCLASS]: 'metaTagged',
-            tag: getTag(val),
-            payload: encode(val.payload),
-          });
-          return result;
         }
         default: {
           assert.fail(X`unrecognized passStyle ${q(passStyle)}`, TypeError);
@@ -386,11 +376,6 @@ export function makeMarshal(
           case 'copyTagged': {
             const { tag, payload } = rawTree;
             return makeCopyTagged(tag, fullRevive(payload));
-          }
-
-          case 'metaTagged': {
-            const { tag, payload } = rawTree;
-            return makeMetaTagged(tag, fullRevive(payload));
           }
 
           case 'error': {

@@ -1,14 +1,11 @@
 // @ts-check
 
 import { assert, details as X, q } from '@agoric/assert';
-import { E } from '@agoric/eventual-send';
-import { getTag, isPrimitive } from './helpers/passStyle-helpers.js';
+import { getTag } from './helpers/passStyle-helpers.js';
 import { makeCopyTagged } from './makeTagged.js';
-import { passStyleOf, everyPassableChild } from './passStyleOf.js';
+import { passStyleOf } from './passStyleOf.js';
 
-const { is, fromEntries, getOwnPropertyNames } = Object;
-
-const { ownKeys } = Reflect;
+const { is } = Object;
 
 /**
  * This is the equality comparison used by JavaScript's Map and Set
@@ -74,8 +71,7 @@ export const pureCopy = val => {
 
     case 'remotable':
     case 'error':
-    case 'promise':
-    case 'metaTagged': {
+    case 'promise': {
       assert.fail(X`${q(passStyle)} in not OnlyData: ${val}`, TypeError);
     }
 
@@ -87,205 +83,3 @@ export const pureCopy = val => {
   }
 };
 harden(pureCopy);
-
-/**
- * TODO If the path to the non-structure becomes an important diagnostic,
- * consider factoring this into a checkStructure that also takes
- * a `path` and a `check` function.
- *
- * @param {Passable} passable
- * @returns {boolean}
- */
-const isStructureInternal = passable => {
-  const passStyle = passStyleOf(passable);
-  switch (passStyle) {
-    case 'undefined':
-    case 'null':
-    case 'boolean':
-    case 'number':
-    case 'bigint':
-    case 'string':
-    case 'symbol': {
-      return true;
-    }
-
-    case 'remotable':
-    case 'copyRecord':
-    case 'copyArray':
-    case 'copyTagged': {
-      // eslint-disable-next-line no-use-before-define
-      return everyPassableChild(passable, isStructure);
-    }
-
-    // Errors are no longer structure
-    case 'error':
-    case 'promise':
-    case 'metaTagged': {
-      return false;
-    }
-    default: {
-      assert.fail(X`Unrecognized passStyle: ${q(passStyle)}`, TypeError);
-    }
-  }
-};
-
-// Like the passStyleCache. An optimization only. Works because comparability
-// is guaranteed stable.
-const structureCache = new WeakMap();
-
-/**
- * @param {Passable} passable
- * @returns {boolean}
- */
-export const isStructure = passable => {
-  const isObject = !isPrimitive(passable);
-  if (isObject) {
-    if (structureCache.has(passable)) {
-      return structureCache.get(passable);
-    }
-  }
-  const result = isStructureInternal(passable);
-  if (isObject) {
-    structureCache.set(passable, result);
-  }
-  return result;
-};
-harden(isStructure);
-
-/**
- * @param {Structure} structure
- */
-export const assertStructure = structure =>
-  assert(isStructure(structure), X`Must be structure: ${structure}`, TypeError);
-harden(assertStructure);
-
-/**
- * A *passable* is something that may be marshalled. It consists of an acyclic
- * graph representing a tree of pass-by-copy data terminating in leaves of
- * passable non-pass-by-copy data. These leaves may be promises, or
- * pass-by-presence objects. A *structure* is a passable whose leaves
- * contain no promises. Two structures can be synchronously compared
- * for structural equivalence.
- *
- * We say that a function *reveals* an X when it returns either an X
- * or a promise for an X.
- *
- * Given a passable, reveal a corresponding structure, where each
- * leaf promise of the passable has been replaced with its
- * corresponding structure, recursively.
- *
- * @param {Passable} passable
- * @returns {import('@agoric/eventual-send').ERef<Structure>}
- */
-export const fulfillToStructure = passable => {
-  if (isStructure(passable)) {
-    // Causes deep memoization, so is amortized fast.
-    return passable;
-  }
-  // Below, we only need to deal with the cases where passable may not
-  // be structure.
-  const passStyle = passStyleOf(passable);
-  switch (passStyle) {
-    case 'promise': {
-      return E.when(passable, nonp => fulfillToStructure(nonp));
-    }
-    case 'copyRecord': {
-      const names = getOwnPropertyNames(passable);
-      const valPs = names.map(name => fulfillToStructure(passable[name]));
-      return E.when(Promise.all(valPs), vals =>
-        harden(fromEntries(vals.map((val, i) => [names[i], val]))),
-      );
-    }
-    case 'copyArray': {
-      const valPs = passable.map(p => fulfillToStructure(p));
-      return E.when(Promise.all(valPs), vals => harden(vals));
-    }
-    case 'copyTagged': {
-      return E.when(fulfillToStructure(passable.payload), payload =>
-        makeCopyTagged(getTag(passable), payload),
-      );
-    }
-    case 'error': {
-      assert.fail(
-        X`Errors are passable but no longer structure: ${passable}`,
-        TypeError,
-      );
-    }
-    default: {
-      assert.fail(X`PassStyle ${q(passStyle)} cannot be structure`, TypeError);
-    }
-  }
-};
-harden(fulfillToStructure);
-
-/**
- * This internal recursion may assume that `left` and `right` are
- * Structures, since `sameStructure` guards that, and the guarantee is
- * deep.
- *
- * @param {Structure} left
- * @param {Structure} right
- * @returns {boolean}
- */
-const sameStructureRecur = (left, right) => {
-  const leftStyle = passStyleOf(left);
-  if (leftStyle !== passStyleOf(right)) {
-    return false;
-  }
-  switch (leftStyle) {
-    case 'undefined':
-    case 'null':
-    case 'boolean':
-    case 'number':
-    case 'bigint':
-    case 'string':
-    case 'symbol':
-    case 'remotable': {
-      return sameValueZero(left, right);
-    }
-    case 'copyRecord': {
-      const leftNames = ownKeys(left);
-      if (leftNames.length !== ownKeys(right).length) {
-        return false;
-      }
-      return leftNames.every(name =>
-        sameStructureRecur(left[name], right[name]),
-      );
-    }
-    case 'copyArray': {
-      if (left.length !== right.length) {
-        return false;
-      }
-      return left.every((v, i) => sameStructureRecur(v, right[i]));
-    }
-    case 'copyTagged': {
-      return (
-        getTag(left) === getTag(right) &&
-        sameStructureRecur(left.payload, right.payload)
-      );
-    }
-    default: {
-      assert.fail(X`Unexpected passStyle ${leftStyle}`, TypeError);
-    }
-  }
-};
-
-/**
- * Are left and right structurally equivalent structures? This
- * compares pass-by-copy data deeply until non-pass-by-copy values are
- * reached. The non-pass-by-copy values at the leaves of the
- * comparison may only be pass-by-presence objects. If they are
- * anything else, including promises, throw an error.
- *
- * Pass-by-presence objects compare identities.
- *
- * @param {Structure} left
- * @param {Structure} right
- * @returns {boolean}
- */
-export const sameStructure = (left, right) => {
-  assertStructure(left);
-  assertStructure(right);
-  return sameStructureRecur(left, right);
-};
-harden(sameStructure);

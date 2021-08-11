@@ -2,8 +2,7 @@
 import { test } from './prepare-test-env-ava.js';
 
 import { Far } from '../src/make-far.js';
-import { makeCopyTagged, makeMetaTagged } from '../src/makeTagged.js';
-import { isStructure, sameStructure } from '../src/structure.js';
+import { makeCopyTagged } from '../src/makeTagged.js';
 import {
   FullRankCover,
   compareRank,
@@ -50,7 +49,6 @@ const sample = harden([
   true,
   undefined,
   [5],
-  makeMetaTagged('patternNode', 'any'),
   alice,
   [],
   Symbol.for('foo'),
@@ -154,12 +152,11 @@ const sortedSample = harden([
   alice,
   carol,
 
-  // All errors are tied. All promises are tied. All metaTaggeds are tied.
-  // None are structures, so they support no finer equivalence check.
+  // All errors are tied. All promises are tied.
+  // They support no finer equivalence check.
   new Error('different'),
   rejectedP,
   rejectedP,
-  makeMetaTagged('nonsense', 'something else'),
 
   undefined,
   undefined,
@@ -173,12 +170,6 @@ test('compare and sort by rank', t => {
     compareRank(sorted, sortedSample),
     0,
     `Not sorted as expected: ${q(sorted)}`,
-  );
-  t.assert(
-    sameStructure(
-      harden(sorted.filter(isStructure)),
-      harden(sortedSample.filter(isStructure)),
-    ),
   );
 });
 

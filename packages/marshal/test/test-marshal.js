@@ -5,7 +5,7 @@ import { test } from './prepare-test-env-ava.js';
 import { passStyleOf } from '../src/passStyleOf.js';
 
 import { makeMarshal } from '../src/marshal.js';
-import { makeCopyTagged, makeMetaTagged } from '../src/makeTagged.js';
+import { makeCopyTagged } from '../src/makeTagged.js';
 
 const { freeze, isFrozen, create, prototype: objectPrototype } = Object;
 
@@ -59,7 +59,7 @@ export const roundTripPairs = harden([
   [[undefined], [{ '@qclass': 'undefined' }]],
   [{ foo: undefined }, { foo: { '@qclass': 'undefined' } }],
 
-  // copyTagged, metaTagged
+  // copyTagged
   [
     makeCopyTagged('x', 8),
     {
@@ -72,22 +72,6 @@ export const roundTripPairs = harden([
     makeCopyTagged('x', undefined),
     {
       '@qclass': 'copyTagged',
-      tag: 'x',
-      payload: { '@qclass': 'undefined' },
-    },
-  ],
-  [
-    makeMetaTagged('x', 8),
-    {
-      '@qclass': 'metaTagged',
-      tag: 'x',
-      payload: 8,
-    },
-  ],
-  [
-    makeMetaTagged('x', undefined),
-    {
-      '@qclass': 'metaTagged',
       tag: 'x',
       payload: { '@qclass': 'undefined' },
     },

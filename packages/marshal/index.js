@@ -19,15 +19,9 @@ export {
   somePassableChild,
 } from './src/passStyleOf.js';
 
-export {
-  pureCopy,
-  isStructure,
-  assertStructure,
-  sameStructure,
-  fulfillToStructure,
-} from './src/structure.js';
+export { pureCopy } from './src/structure.js';
 
-export { makeCopyTagged, makeMetaTagged } from './src/makeTagged.js';
+export { makeCopyTagged } from './src/makeTagged.js';
 export { Remotable, Far, ToFarFunction } from './src/make-far.js';
 
 export { QCLASS, makeMarshal } from './src/marshal.js';

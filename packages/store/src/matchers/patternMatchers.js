@@ -29,7 +29,7 @@ const { details: X } = assert;
 
 /** @type {Matcher} */
 export const MatchAny = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:any',
 
@@ -47,7 +47,7 @@ export const MatchAny = harden({
 
 /** @type {Matcher} */
 export const MatchKeyStyle = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:keyStyle',
 
@@ -68,7 +68,7 @@ export const MatchKeyStyle = harden({
 
 /** @type {Matcher} */
 export const MatchAnd = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:and',
 
@@ -96,7 +96,7 @@ export const MatchAnd = harden({
 
 /** @type {Matcher} */
 export const MatchOr = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:or',
 
@@ -124,7 +124,7 @@ export const MatchOr = harden({
 
 /** @type {Matcher} */
 export const MatchGTE = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:gte',
 
@@ -156,7 +156,7 @@ export const MatchGTE = harden({
 
 /** @type {Matcher} */
 export const MatchLTE = harden({
-  passStyleName: 'metaTagged',
+  passStyleName: 'copyTagged',
   keyStyleName: undefined,
   patternStyleName: 'match:lte',
 

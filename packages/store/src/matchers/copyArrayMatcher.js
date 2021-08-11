@@ -9,7 +9,7 @@ import {
   compareKeys,
   match,
   getRankCover,
-} from './compareKeys';
+} from './compareKeys.js';
 
 // eslint-disable-next-line spaced-comment
 /// <reference types="ses"/>

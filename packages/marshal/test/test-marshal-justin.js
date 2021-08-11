@@ -1,7 +1,7 @@
 import { test } from './prepare-test-env-ava.js';
 
 import { Remotable } from '../src/make-far.js';
-import { makeCopyTagged, makeMetaTagged } from '../src/makeTagged.js';
+import { makeCopyTagged } from '../src/makeTagged.js';
 import { makeMarshal } from '../src/marshal.js';
 import { decodeToJustin } from '../src/marshal-justin.js';
 
@@ -62,16 +62,11 @@ export const jsonPairs = harden([
     '{"@qclass":{"@qclass":8,foo:"foo1"},bar:{"@qclass":undefined}}',
   ],
 
-  // copyTagged, metaTagged
+  // copyTagged
   ['{"@qclass":"copyTagged","tag":"x","payload":8}', 'makeCopyTagged("x",8)'],
   [
     '{"@qclass":"copyTagged","tag":"x","payload":{"@qclass":"undefined"}}',
     'makeCopyTagged("x",undefined)',
-  ],
-  ['{"@qclass":"metaTagged","tag":"x","payload":8}', 'makeMetaTagged("x",8)'],
-  [
-    '{"@qclass":"metaTagged","tag":"x","payload":{"@qclass":"undefined"}}',
-    'makeMetaTagged("x",undefined)',
   ],
 
   // Slots
@@ -84,7 +79,7 @@ export const jsonPairs = harden([
 const fakeJustinCompartment = () => {
   const getSlotVal = (index, iface) =>
     Remotable(iface, undefined, { getIndex: () => index });
-  return new Compartment({ getSlotVal, makeCopyTagged, makeMetaTagged });
+  return new Compartment({ getSlotVal, makeCopyTagged });
 };
 
 test('serialize decodeToJustin eval round trip pairs', t => {

@@ -23,47 +23,41 @@ const { details: X } = assert;
 const { ownKeys } = Reflect;
 const { getPrototypeOf, prototype: objectPrototype } = Object;
 
-const makeTaggedHelper = styleName => {
-  /**
-   *
-   * @type {PassStyleHelper}
-   */
-  const TaggedHelper = harden({
-    styleName,
+/**
+ *
+ * @type {PassStyleHelper}
+ */
+export const CopyTaggedHelper = harden({
+  styleName: 'copyTagged',
 
-    canBeValid: (candidate, check = x => x) =>
-      checkTagRecord(candidate, styleName, check),
+  canBeValid: (candidate, check = x => x) =>
+    checkTagRecord(candidate, 'copyTagged', check),
 
-    assertValid: (candidate, passStyleOfRecur) => {
-      TaggedHelper.canBeValid(candidate, assertChecker);
-      assert.equal(
-        getPrototypeOf(candidate),
-        objectPrototype,
-        X`Unexpected prototype for: ${candidate}`,
-      );
+  assertValid: (candidate, passStyleOfRecur) => {
+    CopyTaggedHelper.canBeValid(candidate, assertChecker);
+    assert.equal(
+      getPrototypeOf(candidate),
+      objectPrototype,
+      X`Unexpected prototype for: ${candidate}`,
+    );
 
-      const {
-        [PASS_STYLE]: _passStyle, // checkTagRecord already checked
-        [Symbol.toStringTag]: _label, // checkTagRecord already checked
-        payload: _payload, // value checked by recursive walk at the end
-        ...rest
-      } = candidate;
+    const {
+      [PASS_STYLE]: _passStyle, // checkTagRecord already checked
+      [Symbol.toStringTag]: _label, // checkTagRecord already checked
+      payload: _payload, // value checked by recursive walk at the end
+      ...rest
+    } = candidate;
 
-      assert(
-        ownKeys(rest).length === 0,
-        X`Unexpected properties on Remotable Proto ${ownKeys(rest)}`,
-      );
+    assert(
+      ownKeys(rest).length === 0,
+      X`Unexpected properties on Remotable Proto ${ownKeys(rest)}`,
+    );
 
-      checkNormalProperty(candidate, 'payload', 'string', true, assertChecker);
+    checkNormalProperty(candidate, 'payload', 'string', true, assertChecker);
 
-      // Recursively validate that each member is passable.
-      TaggedHelper.every(candidate, v => !!passStyleOfRecur(v));
-    },
+    // Recursively validate that each member is passable.
+    CopyTaggedHelper.every(candidate, v => !!passStyleOfRecur(v));
+  },
 
-    every: (passable, fn) => fn(passable.payload, 'payload'),
-  });
-  return TaggedHelper;
-};
-
-export const CopyTaggedHelper = makeTaggedHelper('copyTagged');
-export const MetaTaggedHelper = makeTaggedHelper('metaTagged');
+  every: (passable, fn) => fn(passable.payload, 'payload'),
+});

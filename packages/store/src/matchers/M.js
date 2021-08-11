@@ -1,12 +1,12 @@
 // @ts-check
 
-import { makeMetaTagged } from '@agoric/marshal';
+import { makeCopyTagged } from '@agoric/marshal';
 
 export const M = harden({
-  any: () => makeMetaTagged('match:any', undefined),
-  style: keyStyle => makeMetaTagged('match:keyStyle', keyStyle),
-  and: (...patts) => makeMetaTagged('match:and', patts),
-  or: (...patts) => makeMetaTagged('match:or', patts),
-  gte: rightSide => makeMetaTagged('match:gte', rightSide),
-  lte: rightSide => makeMetaTagged('match:lte', rightSide),
+  any: () => makeCopyTagged('match:any', undefined),
+  style: keyStyle => makeCopyTagged('match:keyStyle', keyStyle),
+  and: (...patts) => makeCopyTagged('match:and', patts),
+  or: (...patts) => makeCopyTagged('match:or', patts),
+  gte: rightSide => makeCopyTagged('match:gte', rightSide),
+  lte: rightSide => makeCopyTagged('match:lte', rightSide),
 });

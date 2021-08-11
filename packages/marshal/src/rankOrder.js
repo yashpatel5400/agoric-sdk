@@ -4,7 +4,7 @@ import { assert, details as X, q } from '@agoric/assert';
 import { getTag } from './helpers/passStyle-helpers.js';
 import { nameForPassableSymbol } from './helpers/symbol.js';
 import { Far } from './make-far.js';
-import { makeCopyTagged, makeMetaTagged } from './makeTagged.js';
+import { makeCopyTagged } from './makeTagged.js';
 import { passStyleOf } from './passStyleOf.js';
 import { sameValueZero } from './structure.js';
 
@@ -22,7 +22,6 @@ const firstCopyTagged = makeCopyTagged('', null);
 const aFar = Far('after copyTaggeds', {});
 const anError = new Error('error sigil');
 const aPromise = Promise.resolve('promise sigil');
-const aMetaTagged = makeMetaTagged('metaTagged sigil', null);
 
 /**
  * Aside from 'undefined', lists the PassStyles from `types.js` in the same
@@ -50,7 +49,6 @@ const PassStyleRankAndCover = harden([
   ['remotable', [aFar, aFar]], // all tied
   ['error', [anError, anError]], // all tied
   ['promise', [aPromise, aPromise]], // all tied
-  ['metaTagged', [aMetaTagged, aMetaTagged]], // all tied
   ['undefined', [undefined, undefined]], // only
 ]);
 
@@ -80,8 +78,7 @@ export const compareRank = (left, right) => {
     case 'null':
     case 'remotable':
     case 'error':
-    case 'promise':
-    case 'metaTagged': {
+    case 'promise': {
       // For each of these passStyles, all members of that passStyle are tied
       // for the same rank.
       return 0;

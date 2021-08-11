@@ -7,4 +7,11 @@ export {
 // during the transition.
 export { makeLegacyMap, makeLegacyMap as default } from './legacyMap.js';
 export { makeLegacyWeakMap } from './legacyWeakMap.js';
+
+export {
+  sameKey,
+  isKey,
+  assertKey,
+  fulfillToKey,
+} from './matchers/compareKeys.js';
 export { M } from './matchers/M.js';

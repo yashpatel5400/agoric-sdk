@@ -14,7 +14,7 @@
  * @typedef { PrimitiveStyle |
  *   "copyRecord" | "copyArray" | "copyTagged" |
  *   "remotable" |
- *   "error" | "promise" | "metaTagged"
+ *   "error" | "promise"
  * } PassStyle
  *
  * Aside from "undefined", this declaration lists the PassStyles in the same
@@ -40,7 +40,7 @@
  *    * the pass-by-copy containers
  *      ("copyRecord" | "copyArray" | "copyTagged") that
  *      contain other Passables,
- *    * and the special cases ("error" | "promise" | "metaTagged").
+ *    * and the special cases ("error" | "promise").
  *
  * A Passable's pass-by-copy superstructure ends in
  * PassableCap leafs ("remotable" | "promise"). Since a
@@ -56,18 +56,7 @@
  */
 
 /**
- * @typedef {Passable} Structure
- *
- * A Passable is a Structure when it contains only
- *    * pass-by-copy primitives,
- *    * pass-by-copy containers,
- *    * remotables.
- *
- * Two Structures may be compared by for equivalence according to
- * `sameStructure`, which is the strongest equivalence class supported by
- * marshal's distributed object semantics.
- *
- * Two Structures can also be compared for full ordering,
+ * Two Passables can also be compared for total rank ordering,
  *    * where their passStyles are ordered according to the
  *      PassStyle typedef above.
  *    * Two primitives of the same PassStyle are compared by the
@@ -86,14 +75,9 @@
  */
 
 /**
- * @deprecated Renamed to `Structure`
- * @typedef {Structure} Comparable
- */
-
-/**
- * @typedef {Structure} OnlyData
+ * @typedef {Passable} OnlyData
  *
- * A Structure is OnlyData when its pass-by-copy superstructure has no
+ * A Passable is OnlyData when its pass-by-copy superstructure has no
  * remotables, i.e., when all the leaves of the data structure tree are
  * primitive data types or empty composites.
  */
@@ -134,12 +118,7 @@
  */
 
 /**
- * @typedef {Passable} MetaTagged
- * @property {Passable} payload
- */
-
-/**
- * @typedef {MetaTagged} PatternNode
+ * @typedef {CopyTagged} PatternNode
  */
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -181,9 +160,6 @@
  *                                        rest?: Encoding
  *           } |
  *           EncodingClass<'copyTagged'> & { tag: string,
- *                                           payload: Encoding
- *           } |
- *           EncodingClass<'metaTagged'> & { tag: string,
  *                                           payload: Encoding
  *           }
  * } EncodingUnion

@@ -171,8 +171,7 @@ const decodeToJustin = (encoding, shouldIndent = false) => {
           assert.typeof(sym, 'symbol');
           return;
         }
-        case 'copyTagged':
-        case 'metaTagged': {
+        case 'copyTagged': {
           const { tag, payload } = rawTree;
           assert.typeof(tag, 'string');
           prepare(payload);
@@ -348,12 +347,6 @@ const decodeToJustin = (encoding, shouldIndent = false) => {
         case 'copyTagged': {
           const { tag, payload } = rawTree;
           out.next(`makeCopyTagged(${quote(tag)},`);
-          decode(payload);
-          return out.next(')');
-        }
-        case 'metaTagged': {
-          const { tag, payload } = rawTree;
-          out.next(`makeMetaTagged(${quote(tag)},`);
           decode(payload);
           return out.next(')');
         }
