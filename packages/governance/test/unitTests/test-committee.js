@@ -21,7 +21,7 @@ const registrarRoot = `${dirname}/../../src/committeeRegistrar.js`;
 const counterRoot = `${dirname}/../../src/binaryBallotCounter.js`;
 
 async function setupContract() {
-    const { zoeService } = makeZoe(fakeVatAdmin);
+  const { zoeService } = makeZoe(fakeVatAdmin);
   const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // pack the contract
