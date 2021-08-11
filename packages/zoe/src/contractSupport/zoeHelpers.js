@@ -161,7 +161,7 @@ export const depositToSeatSuccessMsg = `Deposit and reallocation successful.`;
  * The `amounts` and `payments` records must have corresponding
  * keywords.
  *
- * @param {FeePurse} feePurse
+ * @param {ERef<FeePurse>} feePurse
  * @param {ContractFacet} zcf
  * @param {ZCFSeat} recipientSeat
  * @param {AmountKeywordRecord} amounts

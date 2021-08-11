@@ -43,7 +43,7 @@
 
 /**
  * @typedef PrivateLoanArgs
- * @property {FeePurse} feePurse
+ * @property {ERef<FeePurse>} feePurse
  */
 
 /**

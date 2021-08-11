@@ -44,6 +44,7 @@ export async function start(zcf) {
       trace(`OFFER TO DEBT: `, runDebt.value);
 
       const { deposited, userSeatPromise: liqSeat } = await offerTo(
+        feePurse,
         zcf,
         swapInvitation,
         undefined, // The keywords were mapped already
@@ -64,6 +65,7 @@ export async function start(zcf) {
           deposited: sellAllDeposited,
           userSeatPromise: sellAllSeat,
         } = await offerTo(
+          feePurse,
           zcf,
           strategy.makeInvitation(),
           undefined, // The keywords were mapped already

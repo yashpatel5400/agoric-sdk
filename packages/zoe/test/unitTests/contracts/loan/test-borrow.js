@@ -40,6 +40,7 @@ const setupBorrow = async (
   // Set up the lender seat
   const maxLoan = AmountMath.make(maxLoanValue, loanKit.brand);
   const { zcfSeat: lenderSeat, userSeat: lenderUserSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Loan: maxLoan } },
     { Loan: loanKit.mint.mintPayment(maxLoan) },
@@ -77,6 +78,8 @@ const setupBorrow = async (
 
   const interestRate = makeRatio(5n, loanKit.brand, BASIS_POINTS);
 
+  const feePurse = E(zoe).makeFeePurse();
+
   const config = {
     lenderSeat,
     mmr,
@@ -89,6 +92,7 @@ const setupBorrow = async (
     interestPeriod: 5n,
     loanBrand: loanKit.brand,
     collateralBrand: collateralKit.brand,
+    feePurse,
   };
   const borrowInvitation = makeBorrowInvitation(zcf, config);
   return {
@@ -308,7 +312,7 @@ test('borrow, then addCollateral, then getLiquidationPromise', async t => {
     },
   );
 
-  await checkNoNewOffers(t, zcf);
+  await checkNoNewOffers(t, zoe, zcf);
 });
 
 test('getDebtNotifier with interest', async t => {

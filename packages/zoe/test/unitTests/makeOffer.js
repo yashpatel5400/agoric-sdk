@@ -4,7 +4,7 @@ import { E } from '@agoric/eventual-send';
 import { assert } from '@agoric/assert';
 
 /**
- * @param {ZoeService} zoe
+ * @param {ZoeServiceWFeePurseApplied} zoe
  * @param {ContractFacet} zcf
  * @param {Proposal=} proposal
  * @param {PaymentPKeywordRecord=} payments

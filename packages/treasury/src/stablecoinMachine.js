@@ -205,6 +205,7 @@ export async function start(zcf, privateArgs) {
       const liqInvitation = E(autoswapAPI).makeAddLiquidityInvitation();
 
       const { deposited } = await offerTo(
+        feePurse,
         zcf,
         liqInvitation,
         undefined,

@@ -25,7 +25,16 @@ test('throw in offerHandler', async t => {
   // install the contract
   const installation = await E(zoe).install(bundle);
 
-  const { creatorFacet } = await E(zoe).startInstance(installation);
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
+  const { creatorFacet } = await E(zoe).startInstance(
+    installation,
+    undefined,
+    undefined,
+    privateArgs,
+  );
 
   const throwInOfferHandlerInvitation = E(
     creatorFacet,

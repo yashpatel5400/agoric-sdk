@@ -16,7 +16,6 @@ import { E } from '@agoric/eventual-send';
  * @param {TimerService} timer
  * @param {ZoeService} zoe
  * @param {Issuer} feeIssuer
- * @param {FeePurse} feePurse
  */
 
 export async function makeScriptedOracle(
@@ -25,7 +24,6 @@ export async function makeScriptedOracle(
   timer,
   zoe,
   feeIssuer,
-  feePurse,
 ) {
   /** @type {OracleHandler} */
   const oracleHandler = harden({
@@ -44,7 +42,7 @@ export async function makeScriptedOracle(
   });
 
   /** @type {OracleStartFnResult} */
-  const startResult = await E(zoe).startInstance(feePurse, oracleInstallation, {
+  const startResult = await E(zoe).startInstance(oracleInstallation, {
     Fee: feeIssuer,
   });
   const creatorFacet = await E(startResult.creatorFacet).initialize({

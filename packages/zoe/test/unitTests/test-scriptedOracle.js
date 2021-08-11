@@ -18,6 +18,7 @@ import buildManualTimer from '../../tools/manualTimer.js';
 import { setup } from './setupBasicMints.js';
 import { assertPayoutAmount } from '../zoeTestHelpers.js';
 import { makeScriptedOracle } from '../../tools/scriptedOracle.js';
+import { makeAndApplyFeePurse } from '../../src/applyFeePurse.js';
 
 // This test shows how to set up a fake oracle and use it in a contract.
 
@@ -29,12 +30,13 @@ const bountyContractPath = `${dirname}/bounty.js`;
 
 /**
  * @typedef {Object} TestContext
- * @property {ZoeService} zoe
+ * @property {ZoeServiceWFeePurseApplied} zoe
  * @property {Installation} oracleInstallation
  * @property {Installation} bountyInstallation
  * @property {Mint} moolaMint
  * @property {Issuer} moolaIssuer
  * @property {(value: Value) => Amount} moola
+ * @property {ERef<FeePurse>} feePurse
  *
  * @typedef {import('ava').ExecutionContext<TestContext>} ExecutionContext
  */
@@ -44,7 +46,8 @@ test.before(
   /** @param {ExecutionContext} ot */ async ot => {
     // Outside of tests, we should use the long-lived Zoe on the
     // testnet. In this test, we must create a new Zoe.
-    const { zoeService: zoe } = makeZoe(makeFakeVatAdmin().admin);
+    const { zoeService } = makeZoe(makeFakeVatAdmin().admin);
+    const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
     const oracleContractBundle = await bundleSource(oracleContractPath);
     const bountyContractBundle = await bundleSource(bountyContractPath);
@@ -55,12 +58,15 @@ test.before(
     const bountyInstallation = await E(zoe).install(bountyContractBundle);
     const { moolaIssuer, moolaMint, moola } = setup();
 
+    const feePurse = E(zoe).makeFeePurse();
+
     ot.context.zoe = zoe;
     ot.context.oracleInstallation = oracleInstallation;
     ot.context.bountyInstallation = bountyInstallation;
     ot.context.moolaMint = moolaMint;
     ot.context.moolaIssuer = moolaIssuer;
     ot.context.moola = moola;
+    ot.context.feePurse = feePurse;
   },
 );
 
@@ -77,7 +83,6 @@ test('pay bounty', async t => {
     timer,
     zoe,
     t.context.moolaIssuer,
-    feePurse,
   );
   const { publicFacet } = oracle;
 
@@ -163,7 +168,6 @@ test('pay no bounty', async t => {
     timer,
     zoe,
     t.context.moolaIssuer,
-    feePurse,
   );
   const { publicFacet } = oracle;
 

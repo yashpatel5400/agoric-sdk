@@ -16,6 +16,7 @@ import {
 } from '../../../src/contractSupport/index.js';
 import { assertPayoutAmount } from '../../zoeTestHelpers.js';
 import { makeOffer } from '../makeOffer.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -27,12 +28,13 @@ async function setupContract(moolaIssuer, bucksIssuer) {
   const setJig = jig => {
     testJig = jig;
   };
-  const { zoeService: zoe } = makeZoe(makeFakeVatAdmin(setJig).admin);
+  const { zoeService } = makeZoe(makeFakeVatAdmin(setJig).admin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   // Alice creates an instance
   const issuerKeywordRecord = harden({
@@ -50,6 +52,7 @@ async function setupContract(moolaIssuer, bucksIssuer) {
 test(`withdrawFromSeat - groundZero`, async t => {
   const { moola, moolaIssuer, bucksMint, bucks, bucksIssuer } = setup();
   const { zoe, zcf } = await setupContract(moolaIssuer, bucksIssuer);
+  const feePurse = E(zoe).makeFeePurse();
 
   const { zcfSeat } = await makeOffer(
     zoe,
@@ -59,7 +62,7 @@ test(`withdrawFromSeat - groundZero`, async t => {
   );
 
   const newBucks = bucksMint.mintPayment(bucks(2));
-  await depositToSeat(zcf, zcfSeat, { C: bucks(2) }, { C: newBucks });
+  await depositToSeat(feePurse, zcf, zcfSeat, { C: bucks(2) }, { C: newBucks });
   const promises = await withdrawFromSeat(zcf, zcfSeat, { C: bucks(2) });
 
   assertPayoutAmount(t, bucksIssuer, promises.C, bucks(2), 'C is 2');
@@ -68,6 +71,7 @@ test(`withdrawFromSeat - groundZero`, async t => {
 test(`withdrawFromSeat - violates offerSafety`, async t => {
   const { moola, moolaIssuer, bucksMint, bucks, bucksIssuer } = setup();
   const { zoe, zcf } = await setupContract(moolaIssuer, bucksIssuer);
+  const feePurse = E(zoe).makeFeePurse();
 
   const { zcfSeat } = await makeOffer(
     zoe,
@@ -77,7 +81,7 @@ test(`withdrawFromSeat - violates offerSafety`, async t => {
   );
 
   const newBucks = bucksMint.mintPayment(bucks(2));
-  await depositToSeat(zcf, zcfSeat, { B: bucks(2) }, { B: newBucks });
+  await depositToSeat(feePurse, zcf, zcfSeat, { B: bucks(2) }, { B: newBucks });
   t.deepEqual(
     zcfSeat.getCurrentAllocation(),
     { A: moola(0n), B: bucks(7n) },

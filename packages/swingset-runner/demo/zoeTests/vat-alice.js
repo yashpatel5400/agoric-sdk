@@ -393,7 +393,15 @@ const build = async (log, zoe, issuers, payments, installations, timer) => {
 
   const doSellTickets = async bobP => {
     const { mintAndSellNFT } = installations;
-    const { creatorFacet } = await E(zoe).startInstance(mintAndSellNFT);
+    const privateArgs = harden({
+      feePurse: E(zoe).makeFeePurse(),
+    });
+    const { creatorFacet } = await E(zoe).startInstance(
+      mintAndSellNFT,
+      undefined,
+      undefined,
+      privateArgs,
+    );
 
     // completeObj exists because of a current limitation in @agoric/marshal : https://github.com/Agoric/agoric-sdk/issues/818
     const {
@@ -428,10 +436,14 @@ const build = async (log, zoe, issuers, payments, installations, timer) => {
   };
 
   const doOTCDesk = async bobP => {
+    const privateArgs = harden({
+      feePurse: E(zoe).makeFeePurse(),
+    });
     const { creatorFacet } = await E(zoe).startInstance(
       installations.otcDesk,
       undefined,
       { coveredCallInstallation: installations.coveredCall },
+      privateArgs,
     );
 
     // Add inventory

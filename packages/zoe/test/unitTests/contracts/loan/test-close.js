@@ -30,6 +30,7 @@ test('makeCloseLoanInvitation repay all', async t => {
 
   // Set up the collateral seat
   const { zcfSeat: collateralSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Collateral: collateral } },
     {
@@ -105,5 +106,5 @@ test('makeCloseLoanInvitation repay all', async t => {
   t.truthy(collateralSeat.hasExited());
 
   // Ensure no new offers can be made
-  await checkNoNewOffers(t, zcf);
+  await checkNoNewOffers(t, zoe, zcf);
 });

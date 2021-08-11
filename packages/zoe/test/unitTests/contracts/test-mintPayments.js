@@ -33,7 +33,7 @@ test('zoe - mint payments', async t => {
         return installationP;
       },
       startInstance: async installation => {
-        const adminP = zoe.startInstance(installation);
+        const adminP = E(zoe).startInstance(installation);
         return adminP;
       },
     };

@@ -27,7 +27,7 @@ test('zoe - escrowToVote', async t => {
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   // Alice creates an instance and acts as the Secretary
   const issuerKeywordRecord = harden({

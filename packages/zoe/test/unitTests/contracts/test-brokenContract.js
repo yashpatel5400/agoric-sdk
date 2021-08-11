@@ -6,6 +6,7 @@ import path from 'path';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import bundleSource from '@agoric/bundle-source';
+import { E } from '@agoric/eventual-send';
 
 // noinspection ES6PreferShortImport
 import { makeZoe } from '../../../src/zoeService/zoe.js';
@@ -26,14 +27,14 @@ test('zoe - brokenAutomaticRefund', async t => {
   const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   // Pack the contract.
   const bundle = await bundleSource(automaticRefundRoot);
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   const issuerKeywordRecord = harden({ Contribution: moolaR.issuer });
 
   // Alice tries to create an instance, but the contract is badly
   // written.
   await t.throwsAsync(
-    () => zoe.startInstance(installation, issuerKeywordRecord),
+    () => E(zoe).startInstance(installation, issuerKeywordRecord),
     { message: 'The contract did not correctly return a creatorInvitation' },
     'startInstance should have thrown',
   );

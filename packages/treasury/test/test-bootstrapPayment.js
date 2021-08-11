@@ -11,6 +11,7 @@ import bundleSource from '@agoric/bundle-source';
 import fakeVatAdmin from '@agoric/zoe/tools/fakeVatAdmin.js';
 import { makeZoe } from '@agoric/zoe';
 import buildManualTimer from '@agoric/zoe/tools/manualTimer.js';
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 import { AmountMath } from '@agoric/ertp';
 import { resolve as importMetaResolve } from 'import-meta-resolve';
 
@@ -33,7 +34,8 @@ const makeInstall = async (root, zoe) => {
 };
 
 test('bootstrap payment', async t => {
-  const { zoeService: zoe, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const autoswapRoot = await autoswapRootP;
   const autoswapInstall = await makeInstall(autoswapRoot, zoe);
   const stablecoinInstall = await makeInstall(stablecoinRoot, zoe);
@@ -61,7 +63,7 @@ test('bootstrap payment', async t => {
 
       bootstrapPaymentValue,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse: E(zoe).makeFeePurse() }),
   );
 
   const issuers = await E(zoe).getIssuers(instance);
@@ -109,7 +111,7 @@ test('bootstrap payment - only minted once', async t => {
 
       bootstrapPaymentValue,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse: E(zoe).makeFeePurse() }),
   );
 
   const issuers = await E(zoe).getIssuers(instance);
@@ -161,7 +163,7 @@ test('bootstrap payment - default value is 0n', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse: E(zoe).makeFeePurse() }),
   );
 
   const issuers = await E(zoe).getIssuers(instance);

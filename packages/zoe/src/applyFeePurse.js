@@ -1,7 +1,7 @@
 // @ts-check
 
 import { E } from '@agoric/eventual-send';
-import { Far } from '../../marshal';
+import { Far } from '@agoric/marshal';
 
 /**
  * Partially apply an already existing feePurse to Zoe methods.

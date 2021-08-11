@@ -23,7 +23,9 @@ const setup = () => {
   }
 
   const { zoeService } = makeZoe(fakeVatAdmin);
-  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
+  const { zoeService: zoeWFeePurseApplied } = makeAndApplyFeePurse(zoeService);
+  /** @type {ZoeServiceWFeePurseApplied} */
+  const zoe = zoeWFeePurseApplied;
 
   const makeSimpleMake = brand => value => AmountMath.make(value, brand);
 
@@ -45,7 +47,7 @@ const setup = () => {
    * @property {(value: any) => Amount} moola
    * @property {(value: any) => Amount} simoleans
    * @property {(value: any) => Amount} bucks
-   * @property {ZoeService} zoe
+   * @property {ZoeServiceWFeePurseApplied} zoe
    */
 
   /** @type {BasicMints} */

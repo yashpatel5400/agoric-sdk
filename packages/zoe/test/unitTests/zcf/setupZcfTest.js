@@ -37,6 +37,7 @@ export const setupZCFTest = async (issuerKeywordRecord, terms) => {
   // @ts-ignore fix types to understand that zcf is always defined
   assert(zcf !== undefined);
   return {
+    zoeWithoutFeePurse: zoeService,
     zoe,
     zcf,
     instance,

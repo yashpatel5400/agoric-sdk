@@ -24,5 +24,5 @@ test('makeKind non-swingset', async t => {
   const installation = await E(zoe).install(bundle);
   t.notThrows(() => makeKind());
   t.notThrows(() => makeVirtualScalarWeakMap());
-  await t.notThrowsAsync(() => zoe.startInstance(installation));
+  await t.notThrowsAsync(() => E(zoe).startInstance(installation));
 });

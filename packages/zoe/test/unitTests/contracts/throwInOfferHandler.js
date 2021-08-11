@@ -12,7 +12,7 @@ import { depositToSeat } from '../../../src/contractSupport/index.js';
  *
  * @type {ContractStartFn}
  */
-const start = zcf => {
+const start = (zcf, { feePurse }) => {
   const throwInOfferHandler = _seat => {
     throw Error('error thrown in offerHandler in contract');
   };
@@ -23,7 +23,7 @@ const start = zcf => {
     const payment = issuerKit.mint.mintPayment(tokens10);
     const amounts = harden({ Token: tokens10 });
     const payments = harden({ Tokens: payment });
-    await depositToSeat(zcf, seat, amounts, payments);
+    await depositToSeat(feePurse, zcf, seat, amounts, payments);
     return 'Should not get here';
   };
   const makeThrowInOfferHandlerInvitation = () =>

@@ -27,6 +27,7 @@ test('makeAddCollateralInvitation', async t => {
 
   // Set up the collateral seat
   const { zcfSeat: collateralSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Collateral: collateral } },
     {

@@ -53,7 +53,7 @@ export const checkDescription = async (t, zoe, invitation, expected) => {
 
 /**
  * @param {import("ava").ExecutionContext<unknown>} t
- * @param {ZoeService} zoe
+ * @param {ZoeServiceWFeePurseApplied} zoe
  * @param {ERef<Invitation>} invitation
  * @param {InvitationDetails} expectedNullHandle expected invitation
  * details with the handle set to 'null'
@@ -124,21 +124,19 @@ export const setupLoanUnitTest = async terms => {
   };
 };
 
-export const checkNoNewOffers = async (t, zcf) => {
+export const checkNoNewOffers = async (t, zoe, zcf) => {
   const newInvitation = zcf.makeInvitation(() => {}, 'noop');
-  const zoe = zcf.getZoeService();
   await t.throwsAsync(() => E(zoe).offer(newInvitation), {
     message: 'No further offers are accepted',
   });
 };
 
-export const makeSeatKit = async (zcf, proposal, payments) => {
+export const makeSeatKit = async (zoe, zcf, proposal, payments) => {
   /** @type {ZCFSeat} */
   let zcfSeat;
   const invitation = zcf.makeInvitation(seat => {
     zcfSeat = seat;
   }, 'seat');
-  const zoe = zcf.getZoeService();
   const userSeat = await E(zoe).offer(
     invitation,
     harden(proposal),
@@ -228,7 +226,7 @@ export const makeAutoswapInstance = async (
     ),
   });
 
-  const seat = await zoe.offer(
+  const seat = await E(zoe).offer(
     E(publicFacet).makeAddLiquidityInvitation(),
     proposal,
     payment,
