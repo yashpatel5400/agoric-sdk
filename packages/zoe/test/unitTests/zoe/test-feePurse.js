@@ -11,8 +11,10 @@ const setup = () => {
   const runIssuerKit = makeIssuerKit('RUN', AssetKind.NAT, {
     decimalPlaces: 6,
   });
-  const { makeFeePurse, isFeePurse } = setupMakeFeePurse(runIssuerKit.issuer);
-  return { makeFeePurse, isFeePurse, runIssuerKit };
+  const { makeFeePurse, assertFeePurse } = setupMakeFeePurse(
+    runIssuerKit.issuer,
+  );
+  return { makeFeePurse, assertFeePurse, runIssuerKit };
 };
 
 test('feePurse starts empty', async t => {
@@ -37,9 +39,10 @@ test('depositing into and withdrawing from feePurse', async t => {
   t.true(AmountMath.isEmpty(feePurse.getCurrentAmount()));
 });
 
-test('isFeePurse', async t => {
-  const { makeFeePurse, isFeePurse } = setup();
+test('assertFeePurse', async t => {
+  const { makeFeePurse, assertFeePurse } = setup();
   const feePurse = makeFeePurse();
 
-  t.true(isFeePurse(feePurse));
+  t.notThrows(() => assertFeePurse(feePurse));
+  t.notThrows(() => assertFeePurse(Promise.resolve(feePurse)));
 });

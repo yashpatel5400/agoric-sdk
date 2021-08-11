@@ -54,7 +54,7 @@ const makeZoe = (
     feeIssuerConfig,
   );
 
-  const { makeFeePurse } = setupMakeFeePurse(feeIssuer);
+  const { makeFeePurse, assertFeePurse } = setupMakeFeePurse(feeIssuer);
 
   // This method contains the power to create a new ZCF Vat, and must
   // be closely held. vatAdminSvc is even more powerful - any vat can
@@ -76,13 +76,14 @@ const makeZoe = (
     getInstallationForInstance,
     getInstanceAdmin,
     invitationIssuer,
-  } = makeZoeStorageManager(createZCFVat, getFeeIssuerKit);
+  } = makeZoeStorageManager(createZCFVat, getFeeIssuerKit, assertFeePurse);
 
   // Pass the capabilities necessary to create zoe.startInstance
   const startInstance = makeStartInstance(
     zoeServicePromiseKit.promise,
     makeZoeInstanceStorageManager,
     unwrapInstallation,
+    assertFeePurse,
   );
 
   // Pass the capabilities necessary to create zoe.offer
@@ -91,6 +92,7 @@ const makeZoe = (
     getInstanceAdmin,
     depositPayments,
     getAssetKindByBrand,
+    assertFeePurse,
   );
 
   // Make the methods that allow users to easily and credibly get
@@ -107,12 +109,12 @@ const makeZoe = (
     startInstance,
     offer,
     makeFeePurse,
+    getPublicFacet,
 
     // The functions below are getters only and have no impact on
     // state within Zoe
     getInvitationIssuer: () => invitationIssuer,
     getFeeIssuer: () => feeIssuer,
-    getPublicFacet,
     getBrands,
     getIssuers,
     getTerms,

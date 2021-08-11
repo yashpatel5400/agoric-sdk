@@ -45,3 +45,72 @@
 /**
  * @typedef {Payment} Invitation
  */
+
+/**
+ * @typedef {Object} ZoeServiceWFeePurseApplied
+ *
+ * See ZoeService for comments.
+ *
+ * @property {() => Issuer} getInvitationIssuer
+ *
+ * @property {InstallWFeePurseApplied} install
+ * @property {StartInstanceWFeePurseApplied} startInstance
+ * @property {OfferWFeePurseApplied} offer
+ * @property {GetPublicFacetWFeePurseApplied} getPublicFacet
+ *
+ * @property {GetIssuers} getIssuers
+ * @property {GetBrands} getBrands
+ * @property {GetTerms} getTerms
+ * @property {GetInstallationForInstance} getInstallationForInstance
+ * @property {GetInstance} getInstance
+ * @property {GetInstallation} getInstallation
+ * @property {GetInvitationDetails} getInvitationDetails - return an
+ * object with the instance, installation, description, invitation
+ * handle, and any custom properties specific to the contract.
+ * @property {GetFeeIssuer} getFeeIssuer
+ * @property {MakeFeePurse} makeFeePurse
+ */
+
+/**
+ * @callback GetPublicFacetWFeePurseApplied
+ *
+ * See GetPublicFacet for comments.
+ *
+ * @param {Instance} instance
+ * @returns {Object}
+ */
+
+/**
+ * @callback InstallWFeePurseApplied
+ *
+ * See Install for comments.
+ *
+ * @param {SourceBundle} bundle
+ * @returns {Installation}
+ */
+
+/**
+ * @callback StartInstanceWFeePurseApplied
+ *
+ * See StartInstance for comments.
+ *
+ * @param {ERef<Installation>} installation
+ * @param {IssuerKeywordRecord=} issuerKeywordRecord
+ * @param {Object=} terms
+ * @param {Object=} privateArgs - an optional configuration object
+ * that can be used to pass in arguments that should not be in the
+ * public terms
+ * @returns {Promise<StartInstanceResult>}
+ */
+
+/**
+ * @callback OfferWFeePurseApplied
+ *
+ * See Offer for comments.
+ *
+ * @param {ERef<FeePurse>} feePurse
+ * @param {ERef<Invitation>} invitation
+ * @param {Proposal=} proposal
+ * @param {PaymentPKeywordRecord=} paymentKeywordRecord
+ * @returns {Promise<UserSeat>} seat
+ */

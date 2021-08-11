@@ -4,7 +4,7 @@ import { assert, details as X } from '@agoric/assert';
 import { Far } from '@agoric/marshal';
 import { E } from '@agoric/eventual-send';
 
-export const makeInstallationStorage = () => {
+export const makeInstallationStorage = assertFeePurse => {
   /** @type {WeakSet<Installation>} */
   const installations = new WeakSet();
 
@@ -13,8 +13,9 @@ export const makeInstallationStorage = () => {
    * evaluated each time it is used to make a new instance of a contract.
    */
   /** @type {Install} */
-  const install = bundle => {
+  const install = (feePurse, bundle) => {
     assert.typeof(bundle, 'object', X`a bundle must be provided`);
+    assertFeePurse(feePurse);
     /** @type {Installation} */
     const installation = Far('Installation', {
       getBundle: () => bundle,

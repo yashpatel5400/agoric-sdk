@@ -58,6 +58,7 @@
 
 /**
  * @callback GetPublicFacet
+ * @param {ERef<FeePurse>} feePurse
  * @param {Instance} instance
  * @returns {Object}
  */
@@ -110,6 +111,7 @@
  * Create an installation by safely evaluating the code and
  * registering it with Zoe. Returns an installation.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {SourceBundle} bundle
  * @returns {Installation}
  */
@@ -131,6 +133,7 @@
  * the creator facet, public facet, and creator invitation as defined
  * by the contract.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {ERef<Installation>} installation
  * @param {IssuerKeywordRecord=} issuerKeywordRecord
  * @param {Object=} terms
@@ -157,6 +160,7 @@
  * values are the actual payments to be escrowed. A payment is
  * expected for every rule under `give`.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {ERef<Invitation>} invitation
  * @param {Proposal=} proposal
  * @param {PaymentPKeywordRecord=} paymentKeywordRecord
