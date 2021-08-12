@@ -35,10 +35,12 @@ async function setupContract() {
     zoe.install(counterBundle),
   ]);
   const terms = { committeeName: 'illuminati', committeeSize: 13 };
+  const privateArgs = harden({ feePurse: E(zoe).makeFeePurse() });
   const registrarStartResult = await E(zoe).startInstance(
     registrarInstallation,
     {},
     terms,
+    privateArgs,
   );
 
   /** @type {ContractFacet} */

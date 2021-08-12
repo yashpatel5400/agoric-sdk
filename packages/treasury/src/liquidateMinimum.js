@@ -23,7 +23,7 @@ const trace = makeTracer('LM');
  */
 
 /** @type {ContractStartFn} */
-export async function start(zcf) {
+export async function start(zcf, { feePurse }) {
   const { autoswap } = zcf.getTerms();
 
   function makeDebtorHook(runDebt) {

@@ -4,7 +4,6 @@ import { E } from '@agoric/eventual-send';
 import { AmountMath } from '@agoric/ertp';
 import { offerTo } from '@agoric/zoe/src/contractSupport/index.js';
 import { makeTracer } from './makeTracer.js';
-import { setupMakeFeePurse } from '../../zoe/src/zoeService/feePurse.js';
 
 const trace = makeTracer('LIQ');
 
@@ -20,6 +19,7 @@ export async function liquidate(
   burnLosses,
   strategy,
   collateralBrand,
+  feePurse,
 ) {
   const runDebt = vaultKit.vault.getDebtAmount();
   const { runBrand } = runDebt.brand;

@@ -8,7 +8,7 @@ import { allComparable } from '@agoric/same-structure';
 
 // Each CommitteeRegistrar represents a particular set of voters. The number of
 // voters is visible in the terms.
-const start = zcf => {
+const start = (zcf, { feePurse }) => {
   // Question => { voter, publicFacet }
   const allQuestions = makeStore('Question');
   const { notifier, updater } = makeNotifierKit();
@@ -60,7 +60,7 @@ const start = zcf => {
     // facets of the ballot counter. Suppress creatorInvitation and adminFacet.
     const { creatorFacet, publicFacet, instance } = await E(
       zcf.getZoeService(),
-    ).startInstance(voteCounter, {}, questionDetails);
+    ).startInstance(feePurse, voteCounter, {}, questionDetails);
     const facets = { voter: E(creatorFacet).getVoterFacet(), publicFacet };
 
     updater.updateState(questionDetails.question);

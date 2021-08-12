@@ -40,9 +40,15 @@ async function committeeBinaryStart(
   installations,
 ) {
   const registrarTerms = { committeeName: 'TheCommittee', committeeSize: 5 };
+  const privateArgs = harden({ feePurse: E(zoe).makeFeePurse() });
   const { creatorFacet: registrarFacet, instance: registrarInstance } = await E(
     zoe,
-  ).startInstance(installations.committeeRegistrar, {}, registrarTerms);
+  ).startInstance(
+    installations.committeeRegistrar,
+    {},
+    registrarTerms,
+    privateArgs,
+  );
 
   const choose = 'Choose';
   const details = { question: choose, positions: ['Eeny', 'Meeny'] };
@@ -90,9 +96,15 @@ async function committeeBinaryTwoQuestions(
   log('starting TWO questions test');
 
   const registrarTerms = { committeeName: 'TheCommittee', committeeSize: 5 };
+  const privateArgs = harden({ feePurse: E(zoe).makeFeePurse() });
   const { creatorFacet: registrarFacet, instance: registrarInstance } = await E(
     zoe,
-  ).startInstance(installations.committeeRegistrar, {}, registrarTerms);
+  ).startInstance(
+    installations.committeeRegistrar,
+    {},
+    registrarTerms,
+    privateArgs,
+  );
 
   const invitations = await E(registrarFacet).getVoterInvitations();
   const details2 = await E(zoe).getInvitationDetails(invitations[2]);

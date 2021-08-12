@@ -83,7 +83,8 @@ test('bootstrap payment', async t => {
 });
 
 test('bootstrap payment - only minted once', async t => {
-  const { zoeService: zoe, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const autoswapRoot = await autoswapRootP;
   const autoswapInstall = await makeInstall(autoswapRoot, zoe);
   const stablecoinInstall = await makeInstall(stablecoinRoot, zoe);
@@ -140,7 +141,8 @@ test('bootstrap payment - only minted once', async t => {
 });
 
 test('bootstrap payment - default value is 0n', async t => {
-  const { zoeService: zoe, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService, feeMintAccess } = makeZoe(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const autoswapRoot = await autoswapRootP;
   const autoswapInstall = await makeInstall(autoswapRoot, zoe);
   const stablecoinInstall = await makeInstall(stablecoinRoot, zoe);

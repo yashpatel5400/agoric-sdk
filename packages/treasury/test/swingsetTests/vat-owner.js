@@ -41,12 +41,12 @@ const build = async (
     liquidationInstall: installations.liquidateMinimum,
     timerService: timer,
   });
-
+  const feePurse = E(zoe).makeFeePurse();
   const { publicFacet, creatorFacet, instance } = await E(zoe).startInstance(
     installations.treasury,
     undefined,
     terms,
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const {

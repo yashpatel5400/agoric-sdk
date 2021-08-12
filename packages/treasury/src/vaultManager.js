@@ -41,6 +41,7 @@ export function makeVaultManager(
   timerService,
   loanParams,
   liquidationStrategy,
+  feePurse,
 ) {
   const { brand: runBrand } = runMint.getIssuerRecord();
 
@@ -142,6 +143,7 @@ export function makeVaultManager(
         runMint.burnLosses,
         liquidationStrategy,
         collateralBrand,
+        feePurse,
       );
     });
     outstandingQuote = undefined;
@@ -156,6 +158,7 @@ export function makeVaultManager(
         runMint.burnLosses,
         liquidationStrategy,
         collateralBrand,
+        feePurse,
       ),
     );
     return Promise.all(promises);
