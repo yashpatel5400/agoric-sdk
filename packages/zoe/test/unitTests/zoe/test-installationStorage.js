@@ -6,13 +6,11 @@ import { Far } from '@agoric/marshal';
 
 import { makeInstallationStorage } from '../../../src/zoeService/installationStorage.js';
 
-const assertFeePurse = () => true;
+const chargeZoeFee = () => true;
 const fakeFeePurse = /** @type {Purse} */ (Far('fake purse', {}));
 
 test('install, unwrap installations', async t => {
-  const { install, unwrapInstallation } = makeInstallationStorage(
-    assertFeePurse,
-  );
+  const { install, unwrapInstallation } = makeInstallationStorage(chargeZoeFee);
   const fakeBundle = {};
 
   const installation = await install(fakeFeePurse, fakeBundle);
@@ -22,9 +20,7 @@ test('install, unwrap installations', async t => {
 });
 
 test('unwrap promise for installation', async t => {
-  const { install, unwrapInstallation } = makeInstallationStorage(
-    assertFeePurse,
-  );
+  const { install, unwrapInstallation } = makeInstallationStorage(chargeZoeFee);
   const fakeBundle = {};
 
   const installation = await install(fakeFeePurse, fakeBundle);
@@ -34,9 +30,7 @@ test('unwrap promise for installation', async t => {
 });
 
 test('install several', async t => {
-  const { install, unwrapInstallation } = makeInstallationStorage(
-    assertFeePurse,
-  );
+  const { install, unwrapInstallation } = makeInstallationStorage(chargeZoeFee);
   const fakeBundle1 = {};
   const fakeBundle2 = {};
 
@@ -52,9 +46,7 @@ test('install several', async t => {
 });
 
 test('install same twice', async t => {
-  const { install, unwrapInstallation } = makeInstallationStorage(
-    assertFeePurse,
-  );
+  const { install, unwrapInstallation } = makeInstallationStorage(chargeZoeFee);
   const fakeBundle1 = {};
 
   const installation1 = await install(fakeFeePurse, fakeBundle1);

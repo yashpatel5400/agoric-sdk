@@ -223,6 +223,7 @@
  * @typedef RootAndAdminNode
  * @property {Object} root
  * @property {AdminNode} adminNode
+ * @property {Meter} meter
  */
 
 /**

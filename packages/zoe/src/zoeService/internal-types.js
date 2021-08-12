@@ -136,13 +136,16 @@
  */
 
 /**
- * @callback IsFeePurse
+ * @callback ChargeZoeFee
  * @param {ERef<Purse>} feePurse
- * @returns {Promise<boolean>}
+ * @param {Amount} feeAmount
+ * @returns {Promise<void>}
  */
 
 /**
- * @callback AssertFeePurse
- * @param {ERef<Purse>} feePurse
- * @returns {void}
+ * @typedef {Object} Meter
+ * @property {(delta: bigint) => void} addRemaining
+ * @property {(newThreshold: bigint) => void} setThreshold
+ * @property {() => bigint} get
+ * @property {() => Notifier<bigint>} getNotifier
  */

@@ -10,7 +10,9 @@ const { details: X } = assert;
  * @returns {{
  *    feeMintAccess: FeeMintAccess,
  *    getFeeIssuerKit: GetFeeIssuerKit,
- *    feeIssuer: Issuer }}
+ *    feeIssuer: Issuer,
+ *    feeBrand: Brand,
+ * }}
  */
 const createFeeMint = feeIssuerConfig => {
   /** @type {IssuerKit} */
@@ -36,6 +38,7 @@ const createFeeMint = feeIssuerConfig => {
     feeMintAccess,
     getFeeIssuerKit,
     feeIssuer: feeIssuerKit.issuer,
+    feeBrand: feeIssuerKit.brand,
   });
 };
 

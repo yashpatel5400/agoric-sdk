@@ -15,6 +15,7 @@ import '@agoric/store/exported.js';
 import '../../exported.js';
 import '../internal-types.js';
 
+import { AmountMath } from '@agoric/ertp';
 import { Far } from '@agoric/marshal';
 import { makePromiseKit } from '@agoric/promise-kit';
 import { AssetKind } from '@agoric/ertp';
@@ -33,6 +34,7 @@ import { setupMakeFeePurse } from './feePurse.js';
  * @param {VatAdminSvc} vatAdminSvc - The vatAdmin Service, which carries the power
  * to create a new vat.
  * @param {FeeIssuerConfig} feeIssuerConfig
+ * @param {ZoeFeesConfig} zoeFees
  * @param {string} [zcfBundleName] - The name of the contract facet bundle.
  * @returns {{ zoeService: ZoeService, feeMintAccess: FeeMintAccess }}
  */
@@ -43,6 +45,12 @@ const makeZoe = (
     assetKind: AssetKind.NAT,
     displayInfo: { decimalPlaces: 6, assetKind: AssetKind.NAT },
   },
+  zoeFees = {
+    getPublicFacetFee: 0n,
+    installFee: 0n,
+    startInstanceFee: 0n,
+    offerFee: 0n,
+  },
   zcfBundleName = undefined,
 ) => {
   // We must pass the ZoeService to `makeStartInstance` before it is
@@ -50,11 +58,22 @@ const makeZoe = (
   /** @type {PromiseRecord<ZoeService>} */
   const zoeServicePromiseKit = makePromiseKit();
 
-  const { feeMintAccess, getFeeIssuerKit, feeIssuer } = createFeeMint(
+  const { feeMintAccess, getFeeIssuerKit, feeIssuer, feeBrand } = createFeeMint(
     feeIssuerConfig,
   );
 
-  const { makeFeePurse, assertFeePurse } = setupMakeFeePurse(feeIssuer);
+  const getPublicFacetFeeAmount = AmountMath.make(
+    feeBrand,
+    zoeFees.getPublicFacetFee,
+  );
+  const installFeeAmount = AmountMath.make(feeBrand, zoeFees.installFee);
+  const startInstanceFeeAmount = AmountMath.make(
+    feeBrand,
+    zoeFees.startInstanceFee,
+  );
+  const offerFeeAmount = AmountMath.make(feeBrand, zoeFees.offerFee);
+
+  const { makeFeePurse, chargeZoeFee } = setupMakeFeePurse(feeIssuer);
 
   // This method contains the power to create a new ZCF Vat, and must
   // be closely held. vatAdminSvc is even more powerful - any vat can
@@ -76,14 +95,21 @@ const makeZoe = (
     getInstallationForInstance,
     getInstanceAdmin,
     invitationIssuer,
-  } = makeZoeStorageManager(createZCFVat, getFeeIssuerKit, assertFeePurse);
+  } = makeZoeStorageManager(
+    createZCFVat,
+    getFeeIssuerKit,
+    chargeZoeFee,
+    getPublicFacetFeeAmount,
+    installFeeAmount,
+  );
 
   // Pass the capabilities necessary to create zoe.startInstance
   const startInstance = makeStartInstance(
     zoeServicePromiseKit.promise,
     makeZoeInstanceStorageManager,
     unwrapInstallation,
-    assertFeePurse,
+    chargeZoeFee,
+    startInstanceFeeAmount,
   );
 
   // Pass the capabilities necessary to create zoe.offer
@@ -92,7 +118,8 @@ const makeZoe = (
     getInstanceAdmin,
     depositPayments,
     getAssetKindByBrand,
-    assertFeePurse,
+    chargeZoeFee,
+    offerFeeAmount,
   );
 
   // Make the methods that allow users to easily and credibly get

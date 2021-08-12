@@ -14,14 +14,16 @@ import { handlePKitWarning } from '../handleWarning.js';
  * @param {Promise<ZoeService>} zoeServicePromise
  * @param {MakeZoeInstanceStorageManager} makeZoeInstanceStorageManager
  * @param {UnwrapInstallation} unwrapInstallation
- * @param {AssertFeePurse} assertFeePurse
+ * @param {ChargeZoeFee} chargeZoeFee
+ * @param {Amount} startInstanceFeeAmount
  * @returns {StartInstance}
  */
 export const makeStartInstance = (
   zoeServicePromise,
   makeZoeInstanceStorageManager,
   unwrapInstallation,
-  assertFeePurse,
+  chargeZoeFee,
+  startInstanceFeeAmount,
 ) => {
   /** @type {StartInstance} */
   const startInstance = async (
@@ -31,7 +33,7 @@ export const makeStartInstance = (
     customTerms = harden({}),
     privateArgs = undefined,
   ) => {
-    assertFeePurse(feePurse);
+    await chargeZoeFee(feePurse, startInstanceFeeAmount);
     /** @type {WeakStore<SeatHandle, ZoeSeatAdmin>} */
     const seatHandleToZoeSeatAdmin = makeWeakStore('seatHandle');
 

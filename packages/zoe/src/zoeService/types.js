@@ -296,3 +296,11 @@
  * @property {AssetKind} assetKind
  * @property {DisplayInfo} displayInfo
  */
+
+/**
+ * @typedef {Object} ZoeFeesConfig
+ * @property {NatValue} getPublicFacetFee
+ * @property {NatValue} installFee
+ * @property {NatValue} startInstanceFee
+ * @property {NatValue} offerFee
+ */

@@ -27,13 +27,17 @@ import { makeInstallationStorage } from './installationStorage.js';
  * @param {CreateZCFVat} createZCFVat - the ability to create a new
  * ZCF Vat
  * @param {GetFeeIssuerKit} getFeeIssuerKit
- * @param {AssertFeePurse} assertFeePurse
+ * @param {ChargeZoeFee} chargeZoeFee
+ * @param {Amount} getPublicFacetFeeAmount
+ * @param {Amount} installFeeAmount
  * @returns {ZoeStorageManager}
  */
 export const makeZoeStorageManager = (
   createZCFVat,
   getFeeIssuerKit,
-  assertFeePurse,
+  chargeZoeFee,
+  getPublicFacetFeeAmount,
+  installFeeAmount,
 ) => {
   // issuerStorage contains the issuers that the ZoeService knows
   // about, as well as information about them such as their brand,
@@ -64,13 +68,14 @@ export const makeZoeStorageManager = (
     getInstanceAdmin,
     initInstanceAdmin,
     deleteInstanceAdmin,
-  } = makeInstanceAdminStorage(assertFeePurse);
+  } = makeInstanceAdminStorage(chargeZoeFee, getPublicFacetFeeAmount);
 
   // Zoe stores "installations" - identifiable bundles of contract
   // code that can be reused again and again to create new contract
   // instances
   const { install, unwrapInstallation } = makeInstallationStorage(
-    assertFeePurse,
+    chargeZoeFee,
+    installFeeAmount,
   );
 
   /** @type {MakeZoeInstanceStorageManager} */
@@ -196,7 +201,7 @@ export const makeZoeStorageManager = (
 
     const makeInvitation = setupMakeInvitation(instance, installation);
 
-    const { root, adminNode } = await createZCFVat();
+    const { root, adminNode, meter } = await createZCFVat();
 
     return harden({
       getTerms: instanceRecordManager.getTerms,

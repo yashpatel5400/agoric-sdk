@@ -8,7 +8,7 @@ import { Far } from '@agoric/marshal';
 import { makeInstanceAdminStorage } from '../../../src/zoeService/instanceAdminStorage.js';
 
 test('makeInstanceAdminStorage', async t => {
-  const assertFeePurse = () => {};
+  const chargeZoeFee = () => {};
   const mockFeePurse = /** @type {FeePurse} */ (Far('feePurse', {}));
 
   const {
@@ -20,7 +20,7 @@ test('makeInstanceAdminStorage', async t => {
     getInstanceAdmin,
     initInstanceAdmin,
     deleteInstanceAdmin,
-  } = makeInstanceAdminStorage(assertFeePurse);
+  } = makeInstanceAdminStorage(chargeZoeFee);
 
   const mockInstance1 = /** @type {Instance} */ (Far('mockInstance1', {}));
   const mockInstance2 = /** @type {Instance} */ (Far('mockInstance2', {}));
