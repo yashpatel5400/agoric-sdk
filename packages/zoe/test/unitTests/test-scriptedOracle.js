@@ -74,7 +74,7 @@ test('pay bounty', async t => {
   const { zoe, oracleInstallation, bountyInstallation } = t.context;
   // The timer is not build in test.before(), because each test needs its own.
   const timer = buildManualTimer(console.log);
-  const { moolaIssuer, moolaMint, moola, feePurse } = t.context;
+  const { moolaIssuer, moolaMint, moola } = t.context;
   const script = { 0: 'Nothing', 1: 'Nothing', 2: 'Nothing', 3: 'Succeeded' };
 
   const oracle = await makeScriptedOracle(
@@ -159,7 +159,7 @@ test('pay no bounty', async t => {
   const { zoe, oracleInstallation, bountyInstallation } = t.context;
   // The timer is not build in test.before(), because each test needs its own.
   const timer = buildManualTimer(console.log);
-  const { moolaIssuer, moolaMint, moola, feePurse } = t.context;
+  const { moolaIssuer, moolaMint, moola } = t.context;
   const script = { 0: 'Nothing', 1: 'Nothing', 2: 'Nothing', 3: 'Nothing' };
 
   const oracle = await makeScriptedOracle(
