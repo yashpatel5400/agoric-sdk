@@ -161,6 +161,7 @@ export const depositToSeatSuccessMsg = `Deposit and reallocation successful.`;
  * The `amounts` and `payments` records must have corresponding
  * keywords.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {ContractFacet} zcf
  * @param {ZCFSeat} recipientSeat
  * @param {AmountKeywordRecord} amounts
@@ -168,7 +169,13 @@ export const depositToSeatSuccessMsg = `Deposit and reallocation successful.`;
  * @returns {Promise<string>} `Deposit and reallocation successful.`
  */
 
-export async function depositToSeat(zcf, recipientSeat, amounts, payments) {
+export async function depositToSeat(
+  feePurse,
+  zcf,
+  recipientSeat,
+  amounts,
+  payments,
+) {
   assert(!recipientSeat.hasExited(), 'The recipientSeat cannot have exited.');
 
   // We will create a temporary offer to be able to escrow our payments
@@ -193,7 +200,7 @@ export async function depositToSeat(zcf, recipientSeat, amounts, payments) {
   // To escrow the payment, we must get the Zoe Service facet and
   // make an offer
   const zoe = zcf.getZoeService();
-  const tempUserSeat = E(zoe).offer(invitation, proposal, payments);
+  const tempUserSeat = E(zoe).offer(feePurse, invitation, proposal, payments);
   // This will be a promise for the string: `Deposit and reallocation
   // successful.` It will only fulfill after the assets have been
   // successfully reallocated to the recipient seat.
@@ -264,6 +271,7 @@ const reverse = (keywordRecord = {}) => {
 
 /** @type {OfferTo} */
 export const offerTo = async (
+  feePurse,
   zcf,
   invitation,
   keywordMapping = {},
@@ -289,6 +297,7 @@ export const offerTo = async (
   const paymentsForOtherContract = mapKeywords(payments, keywordMapping);
 
   const userSeatPromise = E(zoe).offer(
+    feePurse,
     invitation,
     proposal,
     paymentsForOtherContract,
@@ -302,7 +311,13 @@ export const offerTo = async (
     // Map back to the original contract's keywords
     const mappedAmounts = mapKeywords(amounts, mappingReversed);
     const mappedPayments = mapKeywords(payoutPayments, mappingReversed);
-    await depositToSeat(zcf, definedToSeat, mappedAmounts, mappedPayments);
+    await depositToSeat(
+      feePurse,
+      zcf,
+      definedToSeat,
+      mappedAmounts,
+      mappedPayments,
+    );
     depositedPromiseKit.resolve(mappedAmounts);
   };
 

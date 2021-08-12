@@ -16,7 +16,7 @@
  * within its vat. The contract and ZCF never have direct access to
  * the users' payments or the Zoe purses.
  *
- * @property {() => Issuer} getInvitationIssuer
+ * @property {() => Promise<Issuer>} getInvitationIssuer
  *
  * Zoe has a single `invitationIssuer` for the entirety of its
  * lifetime. By having a reference to Zoe, a user can get the
@@ -44,7 +44,7 @@
 
 /**
  * @callback GetFeeIssuer
- * @returns {Issuer}
+ * @returns {Promise<Issuer>}
  */
 
 /**
@@ -53,37 +53,38 @@
 
 /**
  * @callback MakeFeePurse
- * @returns {FeePurse}
+ * @returns {Promise<FeePurse>}
  */
 
 /**
  * @callback GetPublicFacet
+ * @param {ERef<FeePurse>} feePurse
  * @param {Instance} instance
- * @returns {Object}
+ * @returns {Promise<Object>}
  */
 
 /**
  * @callback GetIssuers
  * @param {Instance} instance
- * @returns {IssuerKeywordRecord}
+ * @returns {Promise<IssuerKeywordRecord>}
  */
 
 /**
  * @callback GetBrands
  * @param {Instance} instance
- * @returns {BrandKeywordRecord}
+ * @returns {Promise<BrandKeywordRecord>}
  */
 
 /**
  * @callback GetTerms
  * @param {Instance} instance
- * @returns {Terms}
+ * @returns {Promise<Terms>}
  */
 
 /**
  * @callback GetInstallationForInstance
  * @param {Instance} instance
- * @returns {Installation}
+ * @returns {Promise<Installation>}
  */
 
 /**
@@ -110,8 +111,9 @@
  * Create an installation by safely evaluating the code and
  * registering it with Zoe. Returns an installation.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {SourceBundle} bundle
- * @returns {Installation}
+ * @returns {Promise<Installation>}
  */
 
 /**
@@ -131,6 +133,7 @@
  * the creator facet, public facet, and creator invitation as defined
  * by the contract.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {ERef<Installation>} installation
  * @param {IssuerKeywordRecord=} issuerKeywordRecord
  * @param {Object=} terms
@@ -157,6 +160,7 @@
  * values are the actual payments to be escrowed. A payment is
  * expected for every rule under `give`.
  *
+ * @param {ERef<FeePurse>} feePurse
  * @param {ERef<Invitation>} invitation
  * @param {Proposal=} proposal
  * @param {PaymentPKeywordRecord=} paymentKeywordRecord
