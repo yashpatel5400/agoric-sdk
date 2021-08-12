@@ -12,6 +12,7 @@ import { makeZoeKit } from '../../../src/zoeService/zoe.js';
 import { makeFakeVatAdmin } from '../../../tools/fakeVatAdmin.js';
 import { depositToSeat } from '../../../src/contractSupport/zoeHelpers.js';
 import { makeOffer } from '../makeOffer.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -23,12 +24,13 @@ async function setupContract(moolaIssuer, bucksIssuer) {
   const setJig = jig => {
     testJig = jig;
   };
-  const { zoeService: zoe } = makeZoeKit(makeFakeVatAdmin(setJig).admin);
+  const { zoeService } = makeZoeKit(makeFakeVatAdmin(setJig).admin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   // Alice creates an instance
   const issuerKeywordRecord = harden({
@@ -38,14 +40,16 @@ async function setupContract(moolaIssuer, bucksIssuer) {
 
   await E(zoe).startInstance(installation, issuerKeywordRecord);
 
+  const feePurse = E(zoe).makeFeePurse();
+
   /** @type {ContractFacet} */
   const zcf = testJig.zcf;
-  return { zoe, zcf };
+  return { zoe, zcf, feePurse };
 }
 
 test(`depositToSeat - groundZero`, async t => {
   const { moola, moolaIssuer, bucksMint, bucks, bucksIssuer } = setup();
-  const { zoe, zcf } = await setupContract(moolaIssuer, bucksIssuer);
+  const { zoe, zcf, feePurse } = await setupContract(moolaIssuer, bucksIssuer);
 
   const { zcfSeat } = await makeOffer(
     zoe,
@@ -54,7 +58,7 @@ test(`depositToSeat - groundZero`, async t => {
     harden({ B: bucksMint.mintPayment(bucks(5)) }),
   );
   const newBucks = bucksMint.mintPayment(bucks(2));
-  await depositToSeat(zcf, zcfSeat, { B: bucks(2) }, { B: newBucks });
+  await depositToSeat(feePurse, zcf, zcfSeat, { B: bucks(2) }, { B: newBucks });
   t.deepEqual(
     zcfSeat.getCurrentAllocation(),
     { A: moola(0n), B: bucks(7n) },
@@ -73,7 +77,8 @@ test(`depositToSeat - keyword variations`, async t => {
     harden({ B: bucksMint.mintPayment(bucks(5)) }),
   );
   const newBucks = bucksMint.mintPayment(bucks(2));
-  await depositToSeat(zcf, zcfSeat, { C: bucks(2) }, { C: newBucks });
+  const feePurse = E(zoe).makeFeePurse();
+  await depositToSeat(feePurse, zcf, zcfSeat, { C: bucks(2) }, { C: newBucks });
   t.deepEqual(
     zcfSeat.getCurrentAllocation(),
     { A: moola(0n), B: bucks(5), C: bucks(2) },
@@ -84,6 +89,7 @@ test(`depositToSeat - keyword variations`, async t => {
 test(`depositToSeat - mismatched keywords`, async t => {
   const { moola, moolaIssuer, bucksMint, bucks, bucksIssuer } = setup();
   const { zoe, zcf } = await setupContract(moolaIssuer, bucksIssuer);
+  const feePurse = E(zoe).makeFeePurse();
 
   const { zcfSeat } = await makeOffer(
     zoe,
@@ -93,7 +99,8 @@ test(`depositToSeat - mismatched keywords`, async t => {
   );
   const newBucks = bucksMint.mintPayment(bucks(2));
   await t.throwsAsync(
-    () => depositToSeat(zcf, zcfSeat, { C: bucks(2) }, { D: newBucks }),
+    () =>
+      depositToSeat(feePurse, zcf, zcfSeat, { C: bucks(2) }, { D: newBucks }),
     {
       message:
         'The "D" keyword in the paymentKeywordRecord was not a keyword in proposal.give, which had keywords: ["C"]',

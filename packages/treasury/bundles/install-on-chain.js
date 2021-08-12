@@ -63,7 +63,9 @@ export async function installOnChain({ agoricNames, board, centralName, chainTim
     bootstrapPaymentValue,
   });
 
-  const privateArgs = harden({ feeMintAccess });
+  const feePurse = E(zoe).makeFeePurse();
+
+  const privateArgs = harden({ feeMintAccess, feePurse });
 
   const { instance, creatorFacet } = await E(zoe).startInstance(stablecoinMachineInstall, undefined, terms, privateArgs);
  

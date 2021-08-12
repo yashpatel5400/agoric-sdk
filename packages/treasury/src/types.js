@@ -132,6 +132,7 @@
  * @param {TimerService} timerService
  * @param {LoanParams} loanParams
  * @param {LiquidationStrategy} liquidationStrategy
+ * @param {FeePurse} feePurse
  * @returns {VaultManager}
  */
 

@@ -50,7 +50,7 @@ import '../../exported.js';
  *
  * @type {ContractStartFn}
  */
-const start = zcf => {
+const start = (zcf, { feePurse }) => {
   const { coveredCallInstallation } = zcf.getTerms();
   const { zcfSeat: marketMakerSeat } = zcf.makeEmptySeatKit();
   const zoe = zcf.getZoeService();
@@ -67,6 +67,7 @@ const start = zcf => {
    */
   const makeQuote = async (price, assets, timeAuthority, deadline) => {
     const { creatorInvitation } = await E(zoe).startInstance(
+      feePurse,
       coveredCallInstallation,
       zcf.getTerms().issuers,
     );
@@ -84,6 +85,7 @@ const start = zcf => {
     });
 
     const { userSeatPromise: coveredCallUserSeat } = await offerTo(
+      feePurse,
       zcf,
       creatorInvitation,
       undefined,

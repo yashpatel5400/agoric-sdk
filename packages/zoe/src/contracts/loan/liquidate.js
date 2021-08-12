@@ -8,6 +8,7 @@ import { AmountMath } from '@agoric/ertp';
 import { offerTo } from '../../contractSupport/zoeHelpers.js';
 
 export const doLiquidation = async (
+  feePurse,
   zcf,
   collateralSeat,
   autoswapPublicFacetP,
@@ -27,6 +28,7 @@ export const doLiquidation = async (
   });
 
   const { userSeatPromise: autoswapUserSeat, deposited } = await offerTo(
+    feePurse,
     zcf,
     swapInvitation,
     keywordMapping,
@@ -66,14 +68,24 @@ export const doLiquidation = async (
  * @type {Liquidate}
  */
 export const liquidate = async (zcf, config) => {
-  const { collateralSeat, autoswapInstance, lenderSeat, loanBrand } = config;
+  const {
+    collateralSeat,
+    autoswapInstance,
+    lenderSeat,
+    loanBrand,
+    feePurse,
+  } = config;
 
   const zoeService = zcf.getZoeService();
 
-  const autoswapPublicFacetP = E(zoeService).getPublicFacet(autoswapInstance);
+  const autoswapPublicFacetP = E(zoeService).getPublicFacet(
+    feePurse,
+    autoswapInstance,
+  );
 
   // For testing purposes, make it easier to mock the autoswap public facet.
   return doLiquidation(
+    feePurse,
     zcf,
     collateralSeat,
     autoswapPublicFacetP,

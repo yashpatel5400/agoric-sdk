@@ -3,7 +3,7 @@
 import bundleSource from '@agoric/bundle-source';
 
 /**
- * @param {ZoeService} zoe
+ * @param {ZoeServiceWFeePurseApplied} zoe
  * @param {string} path
  * @returns {Promise<Installation>}
  */

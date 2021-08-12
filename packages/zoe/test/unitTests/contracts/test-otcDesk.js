@@ -55,10 +55,14 @@ const makeAlice = async (
   return {
     installCode: async () => {},
     startInstance: async () => {
+      const privateArgs = harden({
+        feePurse: E(zoe).makeFeePurse(),
+      });
       ({ creatorFacet } = await E(zoe).startInstance(
         installation,
         undefined,
         harden({ coveredCallInstallation }),
+        privateArgs,
       ));
     },
     addInventory: async () => {
@@ -160,7 +164,7 @@ const makeBob = (
       const simoleanPayment1 = simoleanPurse.withdraw(simoleans(4));
       const payments = { Whatever1: simoleanPayment1 };
 
-      const seat = await zoe.offer(invitation, proposal, payments);
+      const seat = await E(zoe).offer(invitation, proposal, payments);
 
       t.is(
         await E(seat).getOfferResult(),
@@ -211,7 +215,11 @@ const makeBob = (
       const simoleanPayment1 = simoleanPurse.withdraw(simoleans(4));
       const payments = { Whatever1: simoleanPayment1 };
 
-      const offerExpiredSeat = await zoe.offer(invitation, proposal, payments);
+      const offerExpiredSeat = await E(zoe).offer(
+        invitation,
+        proposal,
+        payments,
+      );
 
       await t.throwsAsync(() => E(offerExpiredSeat).getOfferResult(), {
         message: 'The covered call option is expired.',
@@ -265,7 +273,7 @@ const makeBob = (
         Whatever2: moola35Payment,
       };
 
-      const seat = await zoe.offer(invitation, proposal, payments);
+      const seat = await E(zoe).offer(invitation, proposal, payments);
 
       await t.throwsAsync(() => E(seat).getOfferResult(), {
         message:
@@ -331,7 +339,7 @@ const makeBob = (
         Whatever2: moola35Payment,
       };
 
-      const seat = await zoe.offer(invitation, proposal, payments);
+      const seat = await E(zoe).offer(invitation, proposal, payments);
 
       await t.throwsAsync(() => E(seat).getOfferResult(), {
         message:

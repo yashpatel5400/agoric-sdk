@@ -10,6 +10,7 @@ import { makeIssuerKit, AmountMath } from '@agoric/ertp';
 import { looksLikeSetValue } from '@agoric/ertp/src/typeGuards.js';
 import { E } from '@agoric/eventual-send';
 import fakeVatAdmin from '../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 // noinspection ES6PreferShortImport
 import { makeZoeKit } from '../../../src/zoeService/zoe.js';
@@ -23,7 +24,8 @@ const sellItemsRoot = `${dirname}/../../../src/contracts/sellItems.js`;
 
 test(`mint and sell tickets for multiple shows`, async t => {
   // Setup initial conditions
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);
@@ -33,8 +35,15 @@ test(`mint and sell tickets for multiple shows`, async t => {
 
   const { issuer: moolaIssuer, brand: moolaBrand } = makeIssuerKit('moola');
 
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
   const { creatorFacet: ticketMaker } = await E(zoe).startInstance(
     mintAndSellNFTInstallation,
+    undefined,
+    undefined,
+    privateArgs,
   );
   const { sellItemsCreatorSeat, sellItemsInstance } = await E(
     ticketMaker,
@@ -147,7 +156,8 @@ test(`mint and sell opera tickets`, async t => {
 
   const moola = value => AmountMath.make(value, moolaBrand);
 
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);
@@ -157,10 +167,17 @@ test(`mint and sell opera tickets`, async t => {
 
   // === Initial Opera de Bordeaux part ===
 
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
   // create an instance of the venue contract
   const mintTickets = async () => {
     const { creatorFacet: ticketSeller } = await E(zoe).startInstance(
       mintAndSellNFTInstallation,
+      undefined,
+      undefined,
+      privateArgs,
     );
 
     const {
@@ -314,7 +331,7 @@ test(`mint and sell opera tickets`, async t => {
 
     const jokerPaymentForTicket = jokerPurse.withdraw(pricePerItem);
 
-    const seat = await zoe.offer(
+    const seat = await E(zoe).offer(
       invitation,
       jokerProposal,
       harden({
@@ -386,7 +403,7 @@ test(`mint and sell opera tickets`, async t => {
       insufficientAmount,
     );
 
-    const seat = await zoe.offer(
+    const seat = await E(zoe).offer(
       invitation,
       jokerProposal,
       harden({
@@ -541,7 +558,8 @@ test(`mint and sell opera tickets`, async t => {
 //
 test('Testing publicFacet.getAvailableItemsNotifier()', async t => {
   // Setup initial conditions
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   const mintAndSellNFTBundle = await bundleSource(mintAndSellNFTRoot);
   const mintAndSellNFTInstallation = await E(zoe).install(mintAndSellNFTBundle);
@@ -551,8 +569,15 @@ test('Testing publicFacet.getAvailableItemsNotifier()', async t => {
 
   const { issuer: moolaIssuer, brand: moolaBrand } = makeIssuerKit('moola');
 
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
   const { creatorFacet: goldenBirdsMaker } = await E(zoe).startInstance(
     mintAndSellNFTInstallation,
+    undefined,
+    undefined,
+    privateArgs,
   );
   const { sellItemsCreatorSeat, sellItemsInstance } = await E(
     goldenBirdsMaker,

@@ -58,7 +58,10 @@ async function setupPool(poolBalances) {
   const moolaAmount = moola(poolBalances.secondary);
   const bucksAmount = bucks(poolBalances.central);
   const { zcfSeat } = zcf.makeEmptySeatKit();
+  const zoe = zcf.getZoeService();
+  const feePurse = E(zoe).makeFeePurse();
   await depositToSeat(
+    feePurse,
     zcf,
     zcfSeat,
     { Secondary: moolaAmount, Central: bucksAmount },

@@ -15,9 +15,16 @@ import {
 } from './helpers.js';
 
 test('test doLiquidation with mocked autoswap', async t => {
-  const { zcf, collateralKit, loanKit } = await setupLoanUnitTest();
+  const {
+    zcf,
+    zoe,
+    collateralKit,
+    loanKit,
+    feePurse,
+  } = await setupLoanUnitTest();
   // Set up the lender seat. At this point the lender has nothing.
   const { zcfSeat: lenderSeat, userSeat: lenderUserSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: harden({}) },
     harden({}),
@@ -28,6 +35,7 @@ test('test doLiquidation with mocked autoswap', async t => {
     zcfSeat: collateralSeat,
     userSeat: collateralUserSeat,
   } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Collateral: collateral } },
     { Collateral: collateralKit.mint.mintPayment(collateral) },
@@ -37,6 +45,7 @@ test('test doLiquidation with mocked autoswap', async t => {
 
   // Setup fake autoswap
   const { zcfSeat: fakePoolSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Central: loan1000 } },
     { Central: loanKit.mint.mintPayment(loan1000) },
@@ -64,6 +73,7 @@ test('test doLiquidation with mocked autoswap', async t => {
   });
 
   await doLiquidation(
+    feePurse,
     zcf,
     collateralSeat,
     autoswapPublicFacetP,
@@ -96,13 +106,20 @@ test('test doLiquidation with mocked autoswap', async t => {
   );
 
   // Ensure no further offers accepted
-  await checkNoNewOffers(t, zcf);
+  await checkNoNewOffers(t, zoe, zcf);
 });
 
 test('test with malfunctioning autoswap', async t => {
-  const { zcf, collateralKit, loanKit } = await setupLoanUnitTest();
+  const {
+    zcf,
+    zoe,
+    collateralKit,
+    loanKit,
+    feePurse,
+  } = await setupLoanUnitTest();
   // Set up the lender seat. At this point the lender has nothing.
   const { zcfSeat: lenderSeat, userSeat: lenderUserSeat } = await makeSeatKit(
+    zoe,
     zcf,
     { give: harden({}) },
     harden({}),
@@ -113,6 +130,7 @@ test('test with malfunctioning autoswap', async t => {
     zcfSeat: collateralSeat,
     userSeat: collateralUserSeat,
   } = await makeSeatKit(
+    zoe,
     zcf,
     { give: { Collateral: collateral } },
     { Collateral: collateralKit.mint.mintPayment(collateral) },
@@ -133,6 +151,7 @@ test('test with malfunctioning autoswap', async t => {
   await t.throwsAsync(
     () =>
       doLiquidation(
+        feePurse,
         zcf,
         collateralSeat,
         autoswapPublicFacetP,
@@ -170,5 +189,5 @@ test('test with malfunctioning autoswap', async t => {
   );
 
   // Ensure no further offers accepted
-  await checkNoNewOffers(t, zcf);
+  await checkNoNewOffers(t, zoe, zcf);
 });

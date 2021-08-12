@@ -3,6 +3,7 @@
 
 import { test } from '@agoric/zoe/tools/prepare-test-env-ava.js';
 import '@agoric/zoe/exported.js';
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 import '../src/types.js';
 
 import { E } from '@agoric/eventual-send';
@@ -55,10 +56,12 @@ const setUpZoeForTest = async setJig => {
    * @property {ERef<MultipoolAutoswapPublicFacet>} autoswap
    */
 
-  const { zoeService, feeMintAccess: nonFarFeeMintAccess } = makeZoeKit(
-    makeFakeVatAdmin(setJig, makeRemote).admin,
-  );
-  /** @type {ERef<ZoeService>} */
+  const {
+    zoeService: nonFarZoeService,
+    feeMintAccess: nonFarFeeMintAccess,
+  } = makeZoeKit(makeFakeVatAdmin(setJig, makeRemote).admin);
+  const { zoeService } = makeAndApplyFeePurse(nonFarZoeService);
+  /** @type {ERef<ZoeServiceWFeePurseApplied>} */
   const zoe = makeFar(zoeService);
   trace('makeZoe');
   const feeMintAccess = await makeFar(nonFarFeeMintAccess);
@@ -159,6 +162,7 @@ test('first', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -171,7 +175,7 @@ test('first', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord, autoswap: _autoswapAPI } = testJig;
@@ -325,6 +329,7 @@ test('price drop', async t => {
     protocolFee: 6,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -337,7 +342,7 @@ test('price drop', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord } = testJig;
@@ -484,6 +489,7 @@ test('price falls precipitously', async t => {
   // gets 41 back
 
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -496,7 +502,7 @@ test('price falls precipitously', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord, autoswap: autoswapAPI } = testJig;
@@ -632,6 +638,7 @@ test('stablecoin display collateral', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine } = await E(zoe).startInstance(
     stablecoinInstall,
     {},
@@ -642,7 +649,7 @@ test('stablecoin display collateral', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord, autoswap: _autoswapAPI } = testJig;
@@ -723,6 +730,7 @@ test('interest on multiple vaults', async t => {
   };
   // Clock ticks by days
   const manualTimer = buildManualTimer(console.log, 0n, secondsPerDay);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -735,7 +743,7 @@ test('interest on multiple vaults', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord, autoswap: _autoswapAPI } = testJig;
@@ -929,6 +937,7 @@ test('adjust balances', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -941,7 +950,7 @@ test('adjust balances', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord } = testJig;
@@ -1232,6 +1241,7 @@ test('overdeposit', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -1244,7 +1254,7 @@ test('overdeposit', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord } = testJig;
@@ -1429,6 +1439,7 @@ test('mutable liquidity triggers and interest', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log, 0n, secondsPerDay * 7n);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -1441,7 +1452,7 @@ test('mutable liquidity triggers and interest', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord } = testJig;
@@ -1650,7 +1661,7 @@ test('bad chargingPeriod', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
-
+  const feePurse = E(zoe).makeFeePurse();
   await t.throwsAsync(
     () =>
       E(zoe).startInstance(
@@ -1663,7 +1674,7 @@ test('bad chargingPeriod', async t => {
           timerService: manualTimer,
           liquidationInstall,
         },
-        harden({ feeMintAccess }),
+        harden({ feeMintAccess, feePurse }),
       ),
     { message: 'chargingPeriod (2) must be a BigInt' },
   );
@@ -1694,6 +1705,7 @@ test('coll fees from loan and AMM', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -1706,7 +1718,7 @@ test('coll fees from loan and AMM', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
 
   const { runIssuerRecord, govIssuerRecord, autoswap: _autoswapAPI } = testJig;
@@ -1832,6 +1844,7 @@ test('close loan', async t => {
     protocolFee: 6n,
   };
   const manualTimer = buildManualTimer(console.log);
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorFacet: stablecoinMachine, publicFacet: lender } = await E(
     zoe,
   ).startInstance(
@@ -1844,7 +1857,7 @@ test('close loan', async t => {
       timerService: manualTimer,
       liquidationInstall,
     },
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
   const { runIssuerRecord, govIssuerRecord } = testJig;
   const { issuer: runIssuer, brand: runBrand } = runIssuerRecord;

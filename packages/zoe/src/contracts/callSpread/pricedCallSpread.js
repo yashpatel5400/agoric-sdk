@@ -60,7 +60,7 @@ const BASIS_POINTS = 10000n;
  */
 
 /** @type {ContractStartFn} */
-const start = zcf => {
+const start = (zcf, { feePurse }) => {
   const {
     brands,
     strikePrice1,
@@ -103,7 +103,7 @@ const start = zcf => {
     });
     // AWAIT ////
 
-    await depositToSeat(zcf, collateralSeat, spreadAmount, payment);
+    await depositToSeat(feePurse, zcf, collateralSeat, spreadAmount, payment);
     // AWAIT ////
 
     const required = multiplyBy(settlementAmount, share);

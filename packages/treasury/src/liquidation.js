@@ -19,6 +19,7 @@ export async function liquidate(
   burnLosses,
   strategy,
   collateralBrand,
+  feePurse,
 ) {
   const runDebt = vaultKit.vault.getDebtAmount();
   const { runBrand } = runDebt.brand;
@@ -29,6 +30,7 @@ export async function liquidate(
     collateralBrand,
   );
   const { deposited, userSeatPromise: liqSeat } = await offerTo(
+    feePurse,
     zcf,
     strategy.makeInvitation(runDebt),
     strategy.keywordMapping(),

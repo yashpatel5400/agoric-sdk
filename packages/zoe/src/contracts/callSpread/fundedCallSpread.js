@@ -56,7 +56,7 @@ import { Position } from './position.js';
  */
 
 /** @type {ContractStartFn} */
-const start = async zcf => {
+const start = async (zcf, { feePurse }) => {
   const {
     brands,
     strikePrice1,
@@ -101,7 +101,7 @@ const start = async zcf => {
       E(invitationIssuer).getAmountOf(pair.ShortOption),
     ]);
     const amounts = { LongOption: longAmount, ShortOption: shortAmount };
-    await depositToSeat(zcf, collateralSeat, amounts, pair);
+    await depositToSeat(feePurse, zcf, collateralSeat, amounts, pair);
     // AWAIT ////
 
     /** @type {OfferHandler} */

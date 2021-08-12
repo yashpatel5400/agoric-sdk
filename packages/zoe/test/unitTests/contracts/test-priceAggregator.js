@@ -15,6 +15,7 @@ import { assert } from '@agoric/assert';
 import { makeFakeVatAdmin } from '../../../tools/fakeVatAdmin.js';
 import { makeZoeKit } from '../../../src/zoeService/zoe.js';
 import buildManualTimer from '../../../tools/manualTimer.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 import '../../../exported.js';
 import '../../../src/contracts/exported.js';
@@ -48,7 +49,8 @@ test.before(
   /** @param {ExecutionContext} ot */ async ot => {
     // Outside of tests, we should use the long-lived Zoe on the
     // testnet. In this test, we must create a new Zoe.
-    const { zoeService: zoe } = makeZoeKit(makeFakeVatAdmin().admin);
+    const { zoeService } = makeZoeKit(makeFakeVatAdmin().admin);
+    const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
     // Pack the contracts.
     const oracleBundle = await bundleSource(oraclePath);
@@ -82,11 +84,16 @@ test.before(
         onReply(_query, _reply) {},
       });
 
+      const privateArgs = harden({
+        feePurse: E(zoe).makeFeePurse(),
+      });
+
       /** @type {OracleStartFnResult} */
       const startResult = await E(zoe).startInstance(
         oracleInstallation,
         { Fee: link.issuer },
         { oracleDescription: 'myOracle' },
+        privateArgs,
       );
       const creatorFacet = await E(startResult.creatorFacet).initialize({
         oracleHandler,
@@ -104,10 +111,14 @@ test.before(
      */
     const makeMedianAggregator = async POLL_INTERVAL => {
       const timer = buildManualTimer(() => {});
+      const privateArgs = harden({
+        feePurse: E(zoe).makeFeePurse(),
+      });
       const aggregator = await E(zoe).startInstance(
         aggregatorInstallation,
         { In: link.issuer, Out: usd.issuer },
         { timer, POLL_INTERVAL },
+        privateArgs,
       );
       await E(aggregator.creatorFacet).initializeQuoteMint(quote.mint);
       return aggregator;

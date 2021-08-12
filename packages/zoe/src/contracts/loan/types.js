@@ -42,6 +42,11 @@
  */
 
 /**
+ * @typedef PrivateLoanArgs
+ * @property {ERef<FeePurse>} feePurse
+ */
+
+/**
  * @typedef LenderSeatProperty
  * @property {ZCFSeat} lenderSeat
  *
@@ -49,7 +54,7 @@
  */
 
 /**
- * @typedef {LoanTerms & LenderSeatProperty} LoanConfigWithLender
+ * @typedef {LoanTerms & LenderSeatProperty & PrivateLoanArgs} LoanConfigWithLender
  *
  * The loan now has a lenderSeat, which is added to the config.
  */
@@ -107,6 +112,7 @@
  * @callback MakeLendInvitation
  * @param {ContractFacet} zcf
  * @param {LoanTerms} config
+ * @param {{ feePurse: FeePurse }} privateArgs
  * @returns {Promise<Invitation>} lendInvitation
  */
 

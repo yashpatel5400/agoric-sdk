@@ -2,6 +2,7 @@
 
 import { test } from '@agoric/zoe/tools/prepare-test-env-ava.js';
 import '@agoric/zoe/exported.js';
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 
 import { E } from '@agoric/eventual-send';
 import { makeFakeVatAdmin } from '@agoric/zoe/tools/fakeVatAdmin.js';
@@ -37,22 +38,25 @@ const setJig = jig => {
 
 const { makeFar, makeNear: makeRemote } = makeLoopback('zoeTest');
 
-const { zoeService, feeMintAccess: nonFarFeeMintAccess } = makeZoeKit(
-  makeFakeVatAdmin(setJig, makeRemote).admin,
-);
-/** @type {ERef<ZoeService>} */
+const {
+  zoeService: nonFarZoeService,
+  feeMintAccess: nonFarFeeMintAccess,
+} = makeZoeKit(makeFakeVatAdmin(setJig, makeRemote).admin);
+const { zoeService } = makeAndApplyFeePurse(nonFarZoeService);
+/** @type {ERef<ZoeServiceWFeePurseApplied>} */
 const zoe = makeFar(zoeService);
 trace('makeZoe');
 const feeMintAccessP = makeFar(nonFarFeeMintAccess);
 
 /**
- * @param {ERef<ZoeService>} zoeP
+ * @param {ERef<ZoeServiceWFeePurseApplied>} zoeP
  * @param {string} sourceRoot
  */
 async function launch(zoeP, sourceRoot) {
   const contractUrl = await importMetaResolve(sourceRoot, import.meta.url);
   const contractPath = new URL(contractUrl).pathname;
   const contractBundle = await bundleSource(contractPath);
+  const feePurse = E(zoe).makeFeePurse();
   const installation = await E(zoeP).install(contractBundle);
   const feeMintAccess = await feeMintAccessP;
   const { creatorInvitation, creatorFacet, instance } = await E(
@@ -61,7 +65,7 @@ async function launch(zoeP, sourceRoot) {
     installation,
     undefined,
     undefined,
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
   const {
     runMint,

@@ -86,10 +86,14 @@ test('fundedCallSpread below Strike1', async t => {
       brands.get('moola'),
     ),
   });
-  const { creatorInvitation } = await zoe.startInstance(
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+  const { creatorInvitation } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
 
   const invitationDetail = await E(zoe).getInvitationDetails(creatorInvitation);
@@ -101,7 +105,7 @@ test('fundedCallSpread below Strike1', async t => {
     give: { Collateral: bucks(300) },
   });
   const alicePayments = { Collateral: aliceBucksPayment };
-  const aliceSeat = await zoe.offer(
+  const aliceSeat = await E(zoe).offer(
     creatorInvitation,
     aliceProposal,
     alicePayments,
@@ -111,11 +115,11 @@ test('fundedCallSpread below Strike1', async t => {
     ShortOption: carolShortOption,
   } = await aliceSeat.getPayouts();
 
-  const bobOptionSeat = await zoe.offer(bobLongOption);
+  const bobOptionSeat = await E(zoe).offer(bobLongOption);
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(t, bobPayout, bobBucksPurse, bucks(0));
 
-  const carolOptionSeat = await zoe.offer(carolShortOption);
+  const carolOptionSeat = await E(zoe).offer(carolShortOption);
   const carolPayout = carolOptionSeat.getPayout('Collateral');
   const carolDeposit = assertPayoutDeposit(
     t,
@@ -176,11 +180,15 @@ test('fundedCallSpread above Strike2', async t => {
     Collateral: bucksIssuer,
     Strike: moolaIssuer,
   });
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
 
-  const { creatorInvitation } = await zoe.startInstance(
+  const { creatorInvitation } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
 
   const invitationDetail = await E(zoe).getInvitationDetails(creatorInvitation);
@@ -192,7 +200,7 @@ test('fundedCallSpread above Strike2', async t => {
     give: { Collateral: bucks(300) },
   });
   const alicePayments = { Collateral: aliceBucksPayment };
-  const aliceSeat = await zoe.offer(
+  const aliceSeat = await E(zoe).offer(
     creatorInvitation,
     aliceProposal,
     alicePayments,
@@ -202,7 +210,7 @@ test('fundedCallSpread above Strike2', async t => {
     ShortOption: carolShortOption,
   } = await aliceSeat.getPayouts();
 
-  const bobOptionSeat = await zoe.offer(bobLongOption);
+  const bobOptionSeat = await E(zoe).offer(bobLongOption);
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(
     t,
@@ -211,7 +219,7 @@ test('fundedCallSpread above Strike2', async t => {
     bucks(300),
   );
 
-  const carolOptionSeat = await zoe.offer(carolShortOption);
+  const carolOptionSeat = await E(zoe).offer(carolShortOption);
   const carolPayout = carolOptionSeat.getPayout('Collateral');
   const carolDeposit = assertPayoutDeposit(
     t,
@@ -272,10 +280,15 @@ test('fundedCallSpread, mid-strike', async t => {
     Strike: moolaIssuer,
   });
 
-  const { creatorInvitation } = await zoe.startInstance(
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
+  const { creatorInvitation } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
 
   const invitationDetail = await E(zoe).getInvitationDetails(creatorInvitation);
@@ -287,7 +300,7 @@ test('fundedCallSpread, mid-strike', async t => {
     give: { Collateral: bucks(300) },
   });
   const alicePayments = { Collateral: aliceBucksPayment };
-  const aliceSeat = await zoe.offer(
+  const aliceSeat = await E(zoe).offer(
     creatorInvitation,
     aliceProposal,
     alicePayments,
@@ -297,7 +310,7 @@ test('fundedCallSpread, mid-strike', async t => {
     ShortOption: carolShortOption,
   } = await aliceSeat.getPayouts();
 
-  const bobOptionSeat = await zoe.offer(bobLongOption);
+  const bobOptionSeat = await E(zoe).offer(bobLongOption);
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(
     t,
@@ -306,7 +319,7 @@ test('fundedCallSpread, mid-strike', async t => {
     bucks(225),
   );
 
-  const carolOptionSeat = await zoe.offer(carolShortOption);
+  const carolOptionSeat = await E(zoe).offer(carolShortOption);
   const carolPayout = carolOptionSeat.getPayout('Collateral');
   const carolDeposit = assertPayoutDeposit(
     t,
@@ -367,10 +380,16 @@ test('fundedCallSpread, late exercise', async t => {
     Collateral: bucksIssuer,
     Strike: moolaIssuer,
   });
-  const { creatorInvitation } = await zoe.startInstance(
+
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
+  const { creatorInvitation } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
 
   const invitationDetails = await E(zoe).getInvitationDetails(
@@ -384,7 +403,7 @@ test('fundedCallSpread, late exercise', async t => {
     give: { Collateral: bucks(300) },
   });
   const alicePayments = { Collateral: aliceBucksPayment };
-  const aliceSeat = await zoe.offer(
+  const aliceSeat = await E(zoe).offer(
     creatorInvitation,
     aliceProposal,
     alicePayments,
@@ -394,7 +413,7 @@ test('fundedCallSpread, late exercise', async t => {
     ShortOption: carolShortOption,
   } = await aliceSeat.getPayouts();
 
-  const bobOptionSeat = await zoe.offer(bobLongOption);
+  const bobOptionSeat = await E(zoe).offer(bobLongOption);
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(
     t,
@@ -407,7 +426,7 @@ test('fundedCallSpread, late exercise', async t => {
   await E(manualTimer).tick();
   await E(manualTimer).tick();
 
-  const carolOptionSeat = await zoe.offer(carolShortOption);
+  const carolOptionSeat = await E(zoe).offer(carolShortOption);
   const carolPayout = await carolOptionSeat.getPayout('Collateral');
   const carolDepositAmount = await E(carolBucksPurse).deposit(carolPayout);
   await t.deepEqual(
@@ -466,10 +485,14 @@ test('fundedCallSpread, sell options', async t => {
     Collateral: bucksIssuer,
     Strike: moolaIssuer,
   });
-  const { creatorInvitation } = await zoe.startInstance(
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+  const { creatorInvitation } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
 
   const invitationDetail = await E(zoe).getInvitationDetails(creatorInvitation);
@@ -481,7 +504,7 @@ test('fundedCallSpread, sell options', async t => {
     give: { Collateral: bucks(300) },
   });
   const alicePayments = { Collateral: aliceBucksPayment };
-  const aliceSeat = await zoe.offer(
+  const aliceSeat = await E(zoe).offer(
     creatorInvitation,
     aliceProposal,
     alicePayments,
@@ -495,7 +518,8 @@ test('fundedCallSpread, sell options', async t => {
     zoe,
     simpleExchange,
   );
-  const { publicFacet: exchangePublic } = await zoe.startInstance(
+
+  const { publicFacet: exchangePublic } = await E(zoe).startInstance(
     exchangeInstallation,
     {
       Asset: invitationIssuer,
@@ -509,9 +533,13 @@ test('fundedCallSpread, sell options', async t => {
     give: { Asset: longOptionAmount },
     want: { Price: bucks(200) },
   });
-  const aliceSellLongSeat = await zoe.offer(aliceLongInvitation, proposalLong, {
-    Asset: longOption,
-  });
+  const aliceSellLongSeat = await E(zoe).offer(
+    aliceLongInvitation,
+    proposalLong,
+    {
+      Asset: longOption,
+    },
+  );
   const aliceLong = assertPayoutDeposit(
     t,
     aliceSellLongSeat.getPayout('Price'),
@@ -525,7 +553,7 @@ test('fundedCallSpread, sell options', async t => {
     give: { Asset: shortOptionAmount },
     want: { Price: bucks(100) },
   });
-  const aliceSellShortSeat = await zoe.offer(
+  const aliceSellShortSeat = await E(zoe).offer(
     aliceShortInvitation,
     proposalShort,
     { Asset: shortOption },
@@ -543,7 +571,7 @@ test('fundedCallSpread, sell options', async t => {
     give: { Price: bucks(200) },
     want: { Asset: longOptionAmount },
   });
-  const bobBuySeat = await zoe.offer(bobLongInvitation, bobProposal, {
+  const bobBuySeat = await E(zoe).offer(bobLongInvitation, bobProposal, {
     Price: bobBucksPayment,
   });
   const longInvitationPayout = await bobBuySeat.getPayout('Asset');
@@ -553,7 +581,7 @@ test('fundedCallSpread, sell options', async t => {
     longInvitationPayout,
     longOptionAmount,
   );
-  const bobOptionSeat = await zoe.offer(longInvitationPayout);
+  const bobOptionSeat = await E(zoe).offer(longInvitationPayout);
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(
     t,
@@ -568,7 +596,7 @@ test('fundedCallSpread, sell options', async t => {
     give: { Price: bucks(100) },
     want: { Asset: shortOptionAmount },
   });
-  const carolBuySeat = await zoe.offer(carolShortInvitation, carolProposal, {
+  const carolBuySeat = await E(zoe).offer(carolShortInvitation, carolProposal, {
     Price: carolBucksPayment,
   });
   const ShortInvitationPayout = await carolBuySeat.getPayout('Asset');
@@ -578,7 +606,7 @@ test('fundedCallSpread, sell options', async t => {
     ShortInvitationPayout,
     shortOptionAmount,
   );
-  const carolOptionSeat = await zoe.offer(ShortInvitationPayout);
+  const carolOptionSeat = await E(zoe).offer(ShortInvitationPayout);
   const carolPayout = carolOptionSeat.getPayout('Collateral');
   const carolDeposit = assertPayoutDeposit(
     t,
@@ -641,10 +669,16 @@ test('pricedCallSpread, mid-strike', async t => {
     Collateral: bucksIssuer,
     Strike: moolaIssuer,
   });
-  const { creatorFacet } = await zoe.startInstance(
+
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
+  const { creatorFacet } = await E(zoe).startInstance(
     installation,
     issuerKeywordRecord,
     terms,
+    privateArgs,
   );
   const invitationPair = await E(creatorFacet).makeInvitationPair(75n);
   const { longInvitation, shortInvitation } = invitationPair;
@@ -662,12 +696,12 @@ test('pricedCallSpread, mid-strike', async t => {
     want: { Option: longOption },
     give: { Collateral: bucks(longOptionValue.collateral) },
   });
-  const bobFundingSeat = await zoe.offer(await longInvitation, bobProposal, {
+  const bobFundingSeat = await E(zoe).offer(await longInvitation, bobProposal, {
     Collateral: bobBucksPayment,
   });
   // bob gets an option, and exercises it for the payout
   const bobOption = await bobFundingSeat.getPayout('Option');
-  const bobOptionSeat = await zoe.offer(bobOption);
+  const bobOptionSeat = await E(zoe).offer(bobOption);
 
   const bobPayout = bobOptionSeat.getPayout('Collateral');
   const bobDeposit = assertPayoutDeposit(
@@ -686,7 +720,7 @@ test('pricedCallSpread, mid-strike', async t => {
     want: { Option: shortOption },
     give: { Collateral: bucks(shortOptionValue.collateral) },
   });
-  const carolFundingSeat = await zoe.offer(
+  const carolFundingSeat = await E(zoe).offer(
     await shortInvitation,
     carolProposal,
     {
@@ -695,7 +729,7 @@ test('pricedCallSpread, mid-strike', async t => {
   );
   // carol gets an option, and exercises it for the payout
   const carolOption = await carolFundingSeat.getPayout('Option');
-  const carolOptionSeat = await zoe.offer(carolOption);
+  const carolOptionSeat = await E(zoe).offer(carolOption);
 
   const carolPayout = carolOptionSeat.getPayout('Collateral');
   const carolDeposit = assertPayoutDeposit(

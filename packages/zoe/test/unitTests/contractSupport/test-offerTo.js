@@ -16,6 +16,7 @@ import {
   swapExact,
 } from '../../../src/contractSupport/zoeHelpers.js';
 import { makeOffer } from '../makeOffer.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -27,12 +28,13 @@ const setupContract = async (moolaIssuer, bucksIssuer) => {
   const setJig = jig => {
     instanceToZCF.set(jig.instance, jig.zcf);
   };
-  const { zoeService: zoe } = makeZoeKit(makeFakeVatAdmin(setJig).admin);
+  const { zoeService } = makeZoeKit(makeFakeVatAdmin(setJig).admin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
-  const installation = await zoe.install(bundle);
+  const installation = await E(zoe).install(bundle);
 
   // Create TWO instances of the zcfTesterContract which have
   // different keywords
@@ -76,6 +78,7 @@ test(`offerTo - basic usage`, async t => {
     moolaIssuer,
     bucksIssuer,
   );
+  const feePurse = E(zoe).makeFeePurse();
 
   const zcfA = instanceToZCF.get(instanceA);
   const zcfB = instanceToZCF.get(instanceB);
@@ -147,6 +150,7 @@ test(`offerTo - basic usage`, async t => {
   t.deepEqual(toSeatContractA.getCurrentAllocation(), {});
 
   const { userSeatPromise: contractBUserSeat, deposited } = await offerTo(
+    feePurse,
     zcfA,
     contractBInvitation,
     keywordMapping,
@@ -173,6 +177,7 @@ test(`offerTo - violates offer safety of fromSeat`, async t => {
     moolaIssuer,
     bucksIssuer,
   );
+  const feePurse = E(zoe).makeFeePurse();
 
   const zcfA = instanceToZCF.get(instanceA);
   const zcfB = instanceToZCF.get(instanceB);
@@ -218,6 +223,7 @@ test(`offerTo - violates offer safety of fromSeat`, async t => {
   await t.throwsAsync(
     () =>
       offerTo(
+        feePurse,
         zcfA,
         contractBInvitation,
         keywordMapping,

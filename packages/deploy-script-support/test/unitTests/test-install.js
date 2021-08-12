@@ -2,6 +2,7 @@
 import { test } from '@agoric/zoe/tools/prepare-test-env-ava.js';
 
 import { makeZoeKit } from '@agoric/zoe';
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 import fakeVatAdmin from '@agoric/zoe/tools/fakeVatAdmin.js';
 import { makeBoard } from '@agoric/vats/src/lib-board.js';
 import bundleSource from '@agoric/bundle-source';
@@ -12,7 +13,8 @@ import '../../exported.js';
 import { makeInstall } from '../../src/install.js';
 
 test('install', async t => {
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   let addedInstallation;
 

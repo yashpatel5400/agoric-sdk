@@ -23,7 +23,7 @@ const { add, multiply, floorDivide, ceilDivide, isGTE } = natSafeMath;
  *
  * @type {ContractStartFn}
  */
-const start = async zcf => {
+const start = async (zcf, { feePurse }) => {
   const {
     timer: rawTimer,
     POLL_INTERVAL,
@@ -255,7 +255,7 @@ const start = async zcf => {
       };
 
       // Obtain the oracle's publicFacet.
-      const oracle = await E(zoe).getPublicFacet(oracleInstance);
+      const oracle = await E(zoe).getPublicFacet(feePurse, oracleInstance);
       assert(records.has(record), X`Oracle record is already deleted`);
 
       /** @type {OracleAdmin} */

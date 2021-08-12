@@ -41,7 +41,7 @@ import { makeMakeCollectFeesInvitation } from './collectRewardFees.js';
 const trace = makeTracer('ST');
 
 /** @type {ContractStartFn} */
-export async function start(zcf, privateArgs) {
+export async function start(zcf, { feeMintAccess, feePurse }) {
   // loanParams has time limits for charging interest
   const {
     autoswapInstall,
@@ -51,8 +51,6 @@ export async function start(zcf, privateArgs) {
     liquidationInstall,
     bootstrapPaymentValue = 0n,
   } = zcf.getTerms();
-
-  const { feeMintAccess } = privateArgs;
 
   assert.typeof(
     loanParams.chargingPeriod,
@@ -113,6 +111,7 @@ export async function start(zcf, privateArgs) {
     instance: autoswapInstance,
     creatorFacet: autoswapCreatorFacet,
   } = await E(zoe).startInstance(
+    feePurse,
     autoswapInstall,
     { Central: runIssuer },
     {
@@ -135,9 +134,11 @@ export async function start(zcf, privateArgs) {
     assert(!collateralTypes.has(collateralBrand));
 
     const { creatorFacet: liquidationFacet } = await E(zoe).startInstance(
+      feePurse,
       liquidationInstall,
       { RUN: runIssuer },
       { autoswap: autoswapAPI },
+      { feePurse },
     );
 
     async function addTypeHook(seat) {
@@ -205,6 +206,7 @@ export async function start(zcf, privateArgs) {
       const liqInvitation = E(autoswapAPI).makeAddLiquidityInvitation();
 
       const { deposited } = await offerTo(
+        feePurse,
         zcf,
         liqInvitation,
         undefined,
@@ -231,6 +233,7 @@ export async function start(zcf, privateArgs) {
         timerService,
         loanParams,
         liquidationStrategy,
+        feePurse,
       );
       collateralTypes.init(collateralBrand, vm);
       return vm;
@@ -341,6 +344,7 @@ export async function start(zcf, privateArgs) {
     rewardPoolSeat,
     autoswapCreatorFacet,
     runBrand,
+    feePurse,
   );
 
   /** @type {StablecoinMachine} */

@@ -14,6 +14,7 @@ import { makeZoeKit } from '../../../../src/zoeService/zoe.js';
 import fakeVatAdmin from '../../../../tools/fakeVatAdmin.js';
 import { makeAttestationElem } from '../../../../src/contracts/attestation/expiring/expiringHelpers.js';
 import { makeHandle } from '../../../../src/makeHandle.js';
+import { makeAndApplyFeePurse } from '../../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -23,7 +24,8 @@ const exampleVotingUsageRoot = `${dirname}/exampleVotingUsage.js`;
 test('exampleVotingUsage', async t => {
   const bundle = await bundleSource(exampleVotingUsageRoot);
 
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
   const installation = await E(zoe).install(bundle);
 
   const bldIssuerKit = makeIssuerKit('BLD', AssetKind.NAT, {

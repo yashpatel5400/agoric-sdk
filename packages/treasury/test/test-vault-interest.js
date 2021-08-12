@@ -10,6 +10,7 @@ import bundleSource from '@agoric/bundle-source';
 import { resolve as importMetaResolve } from 'import-meta-resolve';
 
 import { makeRatio } from '@agoric/zoe/src/contractSupport/ratio.js';
+import { makeAndApplyFeePurse } from '@agoric/zoe/src/applyFeePurse.js';
 import { AmountMath } from '@agoric/ertp';
 import { assert } from '@agoric/assert';
 import { makeTracer } from '../src/makeTracer.js';
@@ -39,16 +40,18 @@ const setJig = jig => {
 
 const { makeFar, makeNear: makeRemote } = makeLoopback('zoeTest');
 
-const { zoeService, feeMintAccess: nonFarFeeMintAccess } = makeZoeKit(
-  makeFakeVatAdmin(setJig, makeRemote).admin,
-);
-/** @type {ERef<ZoeService>} */
+const {
+  zoeService: nonFarZoeService,
+  feeMintAccess: nonFarFeeMintAccess,
+} = makeZoeKit(makeFakeVatAdmin(setJig, makeRemote).admin);
+const { zoeService } = makeAndApplyFeePurse(nonFarZoeService);
+/** @type {ERef<ZoeServiceWFeePurseApplied>} */
 const zoe = makeFar(zoeService);
 trace('makeZoe');
 const feeMintAccessP = makeFar(nonFarFeeMintAccess);
 
 /**
- * @param {ERef<ZoeService>} zoeP
+ * @param {ERef<ZoeServiceWFeePurseApplied>} zoeP
  * @param {string} sourceRoot
  */
 async function launch(zoeP, sourceRoot) {
@@ -57,13 +60,14 @@ async function launch(zoeP, sourceRoot) {
   const contractBundle = await bundleSource(contractPath);
   const installation = await E(zoeP).install(contractBundle);
   const feeMintAccess = await feeMintAccessP;
+  const feePurse = E(zoe).makeFeePurse();
   const { creatorInvitation, creatorFacet, instance } = await E(
     zoeP,
   ).startInstance(
     installation,
     undefined,
     undefined,
-    harden({ feeMintAccess }),
+    harden({ feeMintAccess, feePurse }),
   );
   const {
     runMint,

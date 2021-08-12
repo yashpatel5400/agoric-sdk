@@ -9,6 +9,7 @@ import bundleSource from '@agoric/bundle-source';
 import { E } from '@agoric/eventual-send';
 import { makeZoeKit } from '../../../src/zoeService/zoe.js';
 import fakeVatAdmin from '../../../tools/fakeVatAdmin.js';
+import { makeAndApplyFeePurse } from '../../../src/applyFeePurse.js';
 
 const filename = new URL(import.meta.url).pathname;
 const dirname = path.dirname(filename);
@@ -16,14 +17,24 @@ const dirname = path.dirname(filename);
 const contractRoot = `${dirname}/throwInOfferHandler.js`;
 
 test('throw in offerHandler', async t => {
-  const { zoeService: zoe } = makeZoeKit(fakeVatAdmin);
+  const { zoeService } = makeZoeKit(fakeVatAdmin);
+  const { zoeService: zoe } = makeAndApplyFeePurse(zoeService);
 
   // pack the contract
   const bundle = await bundleSource(contractRoot);
   // install the contract
   const installation = await E(zoe).install(bundle);
 
-  const { creatorFacet } = await E(zoe).startInstance(installation);
+  const privateArgs = harden({
+    feePurse: E(zoe).makeFeePurse(),
+  });
+
+  const { creatorFacet } = await E(zoe).startInstance(
+    installation,
+    undefined,
+    undefined,
+    privateArgs,
+  );
 
   const throwInOfferHandlerInvitation = E(
     creatorFacet,

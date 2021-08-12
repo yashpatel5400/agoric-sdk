@@ -16,7 +16,7 @@ import { makeBorrowInvitation } from './borrow.js';
 // already exited with their loan.)
 
 /** @type {MakeLendInvitation} */
-export const makeLendInvitation = (zcf, config) => {
+export const makeLendInvitation = (zcf, config, privateArgs) => {
   /** @type {OfferHandler} */
   const lend = lenderSeat => {
     // Lender will want the interest earned from the loan + their
@@ -38,7 +38,7 @@ export const makeLendInvitation = (zcf, config) => {
       exit: { onDemand: null }, // The lender must be able to exit with their loan at any time before the money is borrowed
     });
 
-    const configWithLenderSeat = { ...config, lenderSeat };
+    const configWithLenderSeat = { ...config, ...privateArgs, lenderSeat };
     return makeBorrowInvitation(zcf, configWithLenderSeat);
   };
 
